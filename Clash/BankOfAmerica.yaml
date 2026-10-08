@@ -1,0 +1,12 @@
+# Bank of America / Merrill
+# behavior: classical; format: yaml
+# Scope: six domain suffixes; does not cover every third-party app dependency.
+# Source and usage: ../README.md
+
+payload:
+  - DOMAIN-SUFFIX,bankofamerica.com
+  - DOMAIN-SUFFIX,bofa.com
+  - DOMAIN-SUFFIX,bac.com
+  - DOMAIN-SUFFIX,baml.com
+  - DOMAIN-SUFFIX,ml.com
+  - DOMAIN-SUFFIX,merrilledge.com
