@@ -4,12 +4,13 @@
 
 ## Bank of America / Merrill
 
-面向 Bank of America（美国银行）及 Merrill / Merrill Edge（美林投资）的域名规则集，两种格式包含相同的六条 `DOMAIN-SUFFIX` 规则。
+面向 Bank of America（美国银行）及 Merrill / Merrill Edge（美林投资）的域名规则集，Surge、Clash YAML 与 Mihomo MRS 三份文件覆盖相同的六个根域名及其子域名。
 
 | 文件 | 格式 |
 | --- | --- |
 | [Surge/BankOfAmerica.list](Surge/BankOfAmerica.list) | Surge `RULE-SET` |
 | [Clash/BankOfAmerica.yaml](Clash/BankOfAmerica.yaml) | Clash / Mihomo `classical` YAML rule-provider |
+| [Clash/BankOfAmerica.mrs](Clash/BankOfAmerica.mrs) | Mihomo `domain` MRS 二进制规则集 |
 
 ### 覆盖范围
 
@@ -38,6 +39,30 @@ RULE-SET,https://raw.githubusercontent.com/easylifegoal/proxy-rules/main/Surge/B
 
 将以下内容合并到现有的 `rule-providers` 与 `rules` 中。不要重复创建同名顶层字段；将此 `RULE-SET` 放在可能提前匹配的通用规则与 `MATCH` 之前。
 
+#### Mihomo MRS
+
+使用支持 MRS 的 Mihomo / Clash Meta 内核时，可以直接订阅：
+
+```yaml
+rule-providers:
+  BankOfAmerica:
+    type: http
+    behavior: domain
+    format: mrs
+    url: https://raw.githubusercontent.com/easylifegoal/proxy-rules/main/Clash/BankOfAmerica.mrs
+    path: ./ruleset/BankOfAmerica.mrs
+    interval: 86400
+
+rules:
+  - RULE-SET,BankOfAmerica,美国银行
+```
+
+MRS 由 Mihomo 官方工具编译，使用 `+.域名` 保持根域名与所有层级子域名的匹配语义。这里必须使用 `behavior: domain`。不支持 MRS 的客户端使用下面的 YAML 格式；Surge 继续使用 `.list`。
+
+#### Clash YAML
+
+与上面的 MRS 配置二选一：
+
 ```yaml
 rule-providers:
   BankOfAmerica:
@@ -61,4 +86,18 @@ rules:
 - [Surge 域名规则文档](https://manual.nssurge.com/rules/domain.html)及[规则集文档](https://manual.nssurge.com/rules/ruleset.html)。
 - [Mihomo 规则集合文档](https://wiki.metacubex.one/config/rule-providers/)。
 
-新增或移除域名时应同步修改两种格式，并根据连接记录确认需求；域名归属与功能覆盖需分开判断。
+新增或移除域名时应同步修改 Surge 与 Clash YAML 文件，并重新生成 MRS，根据连接记录确认需求；域名归属与功能覆盖需分开判断。
+
+当前 MRS 使用 Mihomo `v1.19.32` 生成。在仓库根目录执行以下命令可从 Surge 的域名后缀规则重新编译（需已安装 `mihomo`）：
+
+```sh
+(
+  set -eu
+  mrs_domains=$(mktemp)
+  trap 'rm -f "$mrs_domains"' EXIT
+  awk -F, '!/^#/ && NF { if ($1 != "DOMAIN-SUFFIX" || NF != 2) exit 1; print "+." $2 }' Surge/BankOfAmerica.list > "$mrs_domains"
+  mihomo convert-ruleset domain text "$mrs_domains" Clash/BankOfAmerica.mrs
+)
+```
+
+此转换仅适用于当前全部为 `DOMAIN-SUFFIX` 的规则；遇到其他规则类型会停止，避免静默遗漏。
