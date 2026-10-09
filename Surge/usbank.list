@@ -1,4 +1,4 @@
-# Bank of America / Merrill
+# usbank - Bank of America / Merrill
 # Scope: six domain suffixes; does not cover every third-party app dependency.
 # Source and usage: ../README.md
 # Select the policy in the main profile's RULE-SET entry.

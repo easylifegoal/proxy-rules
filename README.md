@@ -2,15 +2,15 @@
 
 个人维护的 Surge 与 Clash / Mihomo 分流规则。
 
-## Bank of America / Merrill
+## usbank
 
 面向 Bank of America（美国银行）及 Merrill / Merrill Edge（美林投资）的域名规则集，Surge、Clash YAML 与 Mihomo MRS 三份文件覆盖相同的六个根域名及其子域名。
 
 | 文件 | 格式 |
 | --- | --- |
-| [Surge/BankOfAmerica.list](Surge/BankOfAmerica.list) | Surge `RULE-SET` |
-| [Clash/BankOfAmerica.yaml](Clash/BankOfAmerica.yaml) | Clash / Mihomo `classical` YAML rule-provider |
-| [Clash/BankOfAmerica.mrs](Clash/BankOfAmerica.mrs) | Mihomo `domain` MRS 二进制规则集 |
+| [Surge/usbank.list](Surge/usbank.list) | Surge `RULE-SET` |
+| [Clash/usbank.yaml](Clash/usbank.yaml) | Clash / Mihomo `classical` YAML rule-provider |
+| [Clash/usbank.mrs](Clash/usbank.mrs) | Mihomo `domain` MRS 二进制规则集 |
 
 ### 覆盖范围
 
@@ -30,7 +30,7 @@
 将以下规则加入现有配置的 `[Rule]` 段，置于通用分流规则与 `FINAL` 之前：
 
 ```ini
-RULE-SET,https://raw.githubusercontent.com/easylifegoal/proxy-rules/main/Surge/BankOfAmerica.list,美国银行
+RULE-SET,https://raw.githubusercontent.com/easylifegoal/proxy-rules/main/Surge/usbank.list,美国银行
 ```
 
 将 `美国银行` 替换为你已有的节点或策略组名称；如需直连，则使用 `DIRECT`。
@@ -45,16 +45,16 @@ RULE-SET,https://raw.githubusercontent.com/easylifegoal/proxy-rules/main/Surge/B
 
 ```yaml
 rule-providers:
-  BankOfAmerica:
+  usbank:
     type: http
     behavior: domain
     format: mrs
-    url: https://raw.githubusercontent.com/easylifegoal/proxy-rules/main/Clash/BankOfAmerica.mrs
-    path: ./ruleset/BankOfAmerica.mrs
+    url: https://raw.githubusercontent.com/easylifegoal/proxy-rules/main/Clash/usbank.mrs
+    path: ./ruleset/usbank.mrs
     interval: 86400
 
 rules:
-  - RULE-SET,BankOfAmerica,美国银行
+  - RULE-SET,usbank,美国银行
 ```
 
 MRS 由 Mihomo 官方工具编译，使用 `+.域名` 保持根域名与所有层级子域名的匹配语义。这里必须使用 `behavior: domain`。不支持 MRS 的客户端使用下面的 YAML 格式；Surge 继续使用 `.list`。
@@ -65,16 +65,16 @@ MRS 由 Mihomo 官方工具编译，使用 `+.域名` 保持根域名与所有�
 
 ```yaml
 rule-providers:
-  BankOfAmerica:
+  usbank:
     type: http
     behavior: classical
     format: yaml
-    url: https://raw.githubusercontent.com/easylifegoal/proxy-rules/main/Clash/BankOfAmerica.yaml
-    path: ./ruleset/BankOfAmerica.yaml
+    url: https://raw.githubusercontent.com/easylifegoal/proxy-rules/main/Clash/usbank.yaml
+    path: ./ruleset/usbank.yaml
     interval: 86400
 
 rules:
-  - RULE-SET,BankOfAmerica,美国银行
+  - RULE-SET,usbank,美国银行
 ```
 
 将 `美国银行` 替换为现有策略名称。以上仅为配置片段；规则文件本身不是节点订阅或完整的 Clash 配置。
@@ -95,8 +95,8 @@ rules:
   set -eu
   mrs_domains=$(mktemp)
   trap 'rm -f "$mrs_domains"' EXIT
-  awk -F, '!/^#/ && NF { if ($1 != "DOMAIN-SUFFIX" || NF != 2) exit 1; print "+." $2 }' Surge/BankOfAmerica.list > "$mrs_domains"
-  mihomo convert-ruleset domain text "$mrs_domains" Clash/BankOfAmerica.mrs
+  awk -F, '!/^#/ && NF { if ($1 != "DOMAIN-SUFFIX" || NF != 2) exit 1; print "+." $2 }' Surge/usbank.list > "$mrs_domains"
+  mihomo convert-ruleset domain text "$mrs_domains" Clash/usbank.mrs
 )
 ```
 
