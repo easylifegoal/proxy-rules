@@ -1,0 +1,41 @@
+# Sources, attribution and licensing
+
+This repository mirrors and converts public routing data. It is not an official
+MetaCubeX, Mihomo, Surge, Netflix, Anthropic, or bank service.
+
+## Upstream rule data
+
+| Manifest source | Repository / publication branch | Upstream license |
+| --- | --- | --- |
+| `metacubex` | [MetaCubeX/meta-rules-dat](https://github.com/MetaCubeX/meta-rules-dat), `meta` | [GPL-3.0](https://github.com/MetaCubeX/meta-rules-dat/blob/master/LICENSE) |
+| `fakeip` | [wwqgtxx/clash-rules](https://github.com/wwqgtxx/clash-rules), `release` | [GPL-3.0](https://github.com/wwqgtxx/clash-rules/blob/master/LICENSE) |
+
+The GPL version 3 text is preserved at [LICENSES/GPL-3.0.txt](LICENSES/GPL-3.0.txt).
+The upstream repositories aggregate additional sources, whose original notices
+and terms are not replaced by this file. See their READMEs and build workflows
+for the complete provenance chain, including v2fly/domain-list-community,
+Loyalsoldier, blackmatrix7/ios_rule_script and juewuy/ShellCrash.
+
+`Sources/*.mrs` are unmodified upstream files. `Sources/*.txt` expose their decoded
+contents. `metadata/sync-state.json` records the exact upstream commit, raw URL,
+SHA-256 and entry counts for the last published build. `Clash`, `Text` and `Surge`
+files are generated representations, with optional explicit modifications from
+`custom/overrides.json`. For unchanged input, the published MRS is byte-for-byte
+identical to the upstream binary. Generated representations of upstream rules
+remain subject to the upstream GPL terms and any applicable original notices.
+
+The bank rules predate this synchronization workflow. Their initial community
+source, scope and limitations remain documented in the README; no additional
+license grant is asserted for third-party contributions to that list.
+
+## Build code and tools
+
+The newly added `scripts/`, `tests/` and `.github/workflows/` synchronization code
+is provided under GPL-3.0-only, as identified by SPDX headers where applicable.
+Mihomo is downloaded from its official release solely as a build tool; binaries
+are not committed here. Its [source and license](https://github.com/MetaCubeX/mihomo)
+remain available upstream. Tool version and compressed-asset SHA-256 are pinned
+in `scripts/install_mihomo.py`.
+
+Only public rules and build metadata belong here. Do not commit full user proxy
+profiles, passwords, node UUIDs, private keys, or access tokens.

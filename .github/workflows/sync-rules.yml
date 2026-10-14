@@ -1,0 +1,91 @@
+name: Sync and validate rules
+
+on:
+  schedule:
+    # 09:17 UTC+8; not an exact-time guarantee. Upstreams normally build after 06:30.
+    - cron: '17 1 * * *'
+  workflow_dispatch:
+    inputs:
+      allow_large_change:
+        description: 'I reviewed an upstream rule-count change (>20% drop or >2x growth)'
+        type: boolean
+        default: false
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/**'
+      - 'scripts/**'
+      - 'tests/**'
+      - 'sources.json'
+      - 'custom/**'
+  pull_request:
+    paths:
+      - '.github/workflows/**'
+      - 'scripts/**'
+      - 'tests/**'
+      - 'sources.json'
+      - 'custom/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rules-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Install verified rule converter
+        run: python3 scripts/install_mihomo.py
+      - name: Test safety checks and conversion semantics
+        run: python3 -m unittest discover -s tests -v
+      - name: Validate all upstream inputs and generated formats
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ALLOW_LARGE_CHANGE: ${{ inputs.allow_large_change || false }}
+        run: |
+          args=()
+          if [ "$ALLOW_LARGE_CHANGE" = true ]; then args+=(--allow-large-change); fi
+          python3 scripts/sync_rules.py "${args[@]}"
+      - name: Verify generated hashes and load both formats in Mihomo
+        run: python3 scripts/validate_generated.py
+
+  publish:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: validate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Install verified rule converter
+        run: python3 scripts/install_mihomo.py
+      - name: Build and validate before publishing
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ALLOW_LARGE_CHANGE: ${{ inputs.allow_large_change || false }}
+        run: |
+          args=()
+          if [ "$ALLOW_LARGE_CHANGE" = true ]; then args+=(--allow-large-change); fi
+          python3 scripts/sync_rules.py "${args[@]}"
+      - name: Verify generated hashes and load both formats in Mihomo
+        run: python3 scripts/validate_generated.py
+      - name: Publish changed rule files only
+        run: |
+          git add -- Clash Surge Sources Text examples metadata
+          if git diff --cached --quiet; then
+            echo "No rule-content changes; nothing to publish."
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'chore: synchronize validated rule sets'
+          # A concurrent user push must fail safely, never be overwritten by a force push.
+          git push origin HEAD:main

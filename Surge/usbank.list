@@ -1,11 +1,8 @@
-# usbank - Bank of America / Merrill
-# Scope: six domain suffixes; does not cover every third-party app dependency.
-# Source and usage: ../README.md
-# Select the policy in the main profile's RULE-SET entry.
-
-DOMAIN-SUFFIX,bankofamerica.com
-DOMAIN-SUFFIX,bofa.com
+# Generated usbank_domain; edit sources.json/custom, not this file.
+# Provenance and license: ../metadata/sync-state.json, ../NOTICE.md
 DOMAIN-SUFFIX,bac.com
 DOMAIN-SUFFIX,baml.com
-DOMAIN-SUFFIX,ml.com
+DOMAIN-SUFFIX,bankofamerica.com
+DOMAIN-SUFFIX,bofa.com
 DOMAIN-SUFFIX,merrilledge.com
+DOMAIN-SUFFIX,ml.com

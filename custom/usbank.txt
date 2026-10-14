@@ -1,0 +1,8 @@
+# Existing Bank of America / Merrill scope; maintained manually, not scraped.
+# Origin and limitations: README.md, Bank of America / Merrill section.
++.bac.com
++.baml.com
++.bankofamerica.com
++.bofa.com
++.merrilledge.com
++.ml.com
