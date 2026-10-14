@@ -18,6 +18,11 @@ from urllib.error import URLError
 from urllib.parse import quote, urlparse
 from urllib.request import Request, urlopen
 
+if __package__:
+    from .classification import audit_classification
+else:
+    from classification import audit_classification
+
 ROOT = Path(__file__).resolve().parents[1]
 MAX_DOWNLOAD = 20 * 1024 * 1024
 NAME = re.compile(r"[A-Za-z0-9_!.-]+\Z")
@@ -81,10 +86,29 @@ def validate_manifest(manifest: dict) -> None:
         input_format = rule.get("input_format", "classical" if rule["behavior"] == "classical" else "mrs")
         if input_format not in ("mrs", "classical") or ((input_format == "classical") != (rule["behavior"] == "classical")):
             raise ValueError(f"Input format and behavior do not match: {name}")
-        if ("local" in rule) == ("upstream" in rule):
+        if sum(key in rule for key in ("local", "upstream", "inputs")) != 1:
             raise ValueError(f"Exactly one input required: {name}")
         if "local" in rule:
             safe_relative(rule["local"])
+        elif "inputs" in rule:
+            if rule["behavior"] != "domain" or not isinstance(rule["inputs"], list) or not rule["inputs"]:
+                raise ValueError(f"Composition requires nonempty domain inputs: {name}")
+            ids = set()
+            for component in rule["inputs"]:
+                key = component["id"]
+                if not NAME.fullmatch(key) or key in ids or key in (".", ".."):
+                    raise ValueError(f"Duplicate/invalid component: {key}")
+                ids.add(key)
+                if component["upstream"] not in manifest["upstreams"]:
+                    raise ValueError(f"Unknown upstream: {key}")
+                safe_relative(component["path"])
+                if component.get("minimum_entries", 0) < 1:
+                    raise ValueError(f"Positive minimum_entries required: {key}")
+                if "select" in component:
+                    selected = component["select"]
+                    if not isinstance(selected, list) or not selected or not all(isinstance(e, str) and "\n" not in e for e in selected):
+                        raise ValueError(f"Invalid component selection: {key}")
+                    parse_entries("\n".join(selected), "domain")
         else:
             if rule["upstream"] not in manifest["upstreams"]:
                 raise ValueError(f"Unknown upstream: {name}")
@@ -258,7 +282,7 @@ def provider_format(rule: dict, preferred: str) -> tuple[str, str]:
     return behavior, fmt
 
 
-def render_examples(manifest: dict) -> dict[str, bytes]:
+def render_examples(manifest: dict, contract: dict | None = None) -> dict[str, bytes]:
     base = f"https://raw.githubusercontent.com/{manifest['publish_repository']}/main"
     result = {}
     for fmt in ("mrs", "yaml"):
@@ -280,16 +304,55 @@ def render_examples(manifest: dict) -> dict[str, bytes]:
             out = rule.get("output", rule["name"])
             lines.append(f"RULE-SET,{base}/Surge/{out}.list,POLICY")
     result["examples/surge-rules.conf"] = ("\n".join(lines) + "\n").encode()
+    if contract:
+        by_name = {r["name"]: r for r in manifest["rules"]}
+        header = ["# Business-domain ordering fragment ONLY; not a complete profile.",
+                  "# Replace POLICY_* with existing client policies. Do not overwrite your rules.",
+                  "# Preserve Wi-Fi, local exceptions, APNS (before Apple), service IP rules and fallback."]
+        clash, surge = header + ["rules:"], header + ["[Rule]"]
+        for name in contract["domain_priority"]:
+            output = by_name[name].get("output", name)
+            clash.append("  - " + json.dumps(f"RULE-SET,{name},POLICY_{name}"))
+            surge.append(f"RULE-SET,{base}/Surge/{output}.list,POLICY_{name}")
+        result["examples/business-rules-clash.yaml"] = ("\n".join(clash) + "\n").encode()
+        result["examples/business-rules-surge.conf"] = ("\n".join(surge) + "\n").encode()
     return result
 
 
-def build_rule(rule: dict, data: bytes | None, snapshots: dict, overrides: dict,
+def build_rule(rule: dict, data: bytes | dict[str, bytes] | None, snapshots: dict, overrides: dict,
                old: dict, mihomo: Path, root: Path, allow_large_change: bool) -> tuple[dict, dict]:
     name, behavior = rule["name"], rule["behavior"]
-    artifacts = {}
+    artifacts, components = {}, {}
     with tempfile.TemporaryDirectory(prefix="proxy-rule-") as directory:
         work = Path(directory)
-        if data is not None:
+        if "inputs" in rule:
+            if not isinstance(data, dict) or set(data) != {c["id"] for c in rule["inputs"]}:
+                raise ValueError(f"Missing/extra composition inputs: {name}")
+            merged = set()
+            for component in rule["inputs"]:
+                key = component["id"]
+                incoming, decoded = work / f"{key}.mrs", work / f"{key}.txt"
+                incoming.write_bytes(data[key])
+                convert(mihomo, behavior, "mrs", incoming, decoded)
+                original = parse_entries(decoded.read_text(), behavior)
+                previous_component = old.get("components", {}).get(key, {})
+                check_count(f"{name}/{key}", len(original), component["minimum_entries"],
+                            previous_component.get("upstream_entries"), allow_large_change)
+                selected = parse_entries("\n".join(component["select"]), behavior) if "select" in component else original
+                missing = set(selected) - set(original)
+                if missing:
+                    raise ValueError(f"{name}/{key}: selected entries absent upstream: {sorted(missing)}")
+                merged.update(selected)
+                artifacts[f"Sources/{name}/{key}.mrs"] = data[key]
+                artifacts[f"Sources/{name}/{key}.txt"] = ("\n".join(original) + "\n").encode()
+                components[key] = {"source": source_url(component, snapshots),
+                                   "upstream_sha256": digest(data[key]), "upstream_entries": len(original),
+                                   "selected_entries": len(selected), "selection": component.get("select", "all")}
+            entries = sorted(merged)
+            origin = "sources.json:rules/" + name + "/inputs"
+            # Stable digest of all component bytes; full provenance is recorded separately.
+            input_hash = digest(json_bytes({k: digest(v) for k, v in sorted(data.items())}))
+        elif data is not None:
             if behavior == "classical":
                 entries = parse_classical(data.decode("utf-8-sig"))
                 artifacts[f"Sources/{name}.list"] = data
@@ -300,10 +363,12 @@ def build_rule(rule: dict, data: bytes | None, snapshots: dict, overrides: dict,
                 entries = parse_entries(decoded.read_text(), behavior)
                 artifacts[f"Sources/{name}.mrs"] = data
             origin = source_url(rule, snapshots)
+            input_hash = digest(data)
         else:
             source = root / rule["local"]
             entries = parse_entries(source.read_text(), behavior)
             origin = rule["local"]
+            input_hash = digest(source.read_bytes())
         check_count(name, len(entries), rule["minimum_entries"], old.get("upstream_entries"), allow_large_change)
         upstream_entries = entries
         artifacts[f"Sources/{name}.txt"] = ("\n".join(entries) + "\n").encode()
@@ -320,7 +385,7 @@ def build_rule(rule: dict, data: bytes | None, snapshots: dict, overrides: dict,
             record = {
                 "source": origin, "behavior": behavior,
                 "upstream_entries": len(upstream_entries), "output_entries": len(entries),
-                "upstream_sha256": digest(data) if data is not None else digest((root / rule['local']).read_bytes()),
+                "upstream_sha256": input_hash,
                 "mrs_sha256": None, "upstream_mrs_preserved": False,
                 "surge_exported": rule.get("surge", True),
             }
@@ -340,7 +405,7 @@ def build_rule(rule: dict, data: bytes | None, snapshots: dict, overrides: dict,
         convert(mihomo, behavior, "mrs", second, second_text)
         if canonical != parse_entries(second_text.read_text(), behavior):
             raise ValueError(f"Unstable MRS round trip: {name}")
-        unchanged = data is not None and entries == upstream_entries
+        unchanged = isinstance(data, bytes) and entries == upstream_entries
         mrs = data if unchanged else compiled.read_bytes()
         plain = ("\n".join(canonical) + "\n").encode()
         heading = f"# Generated {name}; edit sources.json/custom, not this file.\n# Provenance and license: ../metadata/sync-state.json, ../NOTICE.md\n"
@@ -356,10 +421,12 @@ def build_rule(rule: dict, data: bytes | None, snapshots: dict, overrides: dict,
         record = {
             "source": origin, "behavior": behavior,
             "upstream_entries": len(upstream_entries), "output_entries": len(canonical),
-            "upstream_sha256": digest(data) if data is not None else digest((root / rule['local']).read_bytes()),
+            "upstream_sha256": input_hash,
             "mrs_sha256": digest(mrs), "upstream_mrs_preserved": unchanged,
             "surge_exported": rule.get("surge", True),
         }
+        if components:
+            record["components"] = components
         print(f"{name}: {len(upstream_entries)} source -> {len(canonical)} output entries; "
               f"MRS {'unchanged' if unchanged else 'compiled'}", flush=True)
         return artifacts, record
@@ -368,12 +435,27 @@ def build_rule(rule: dict, data: bytes | None, snapshots: dict, overrides: dict,
 def publish(root: Path, artifacts: dict[str, bytes], state: dict, check: bool) -> bool:
     changed = [path for path, data in artifacts.items()
                if not (root / path).is_file() or (root / path).read_bytes() != data]
+    # Prune only obsolete generated files recorded in our previous state, never arbitrary files.
+    previous_path = root / "metadata/sync-state.json"
+    previous = json.loads(previous_path.read_text()) if previous_path.exists() else {}
+    stale = []
+    for path, expected_hash in previous.get("output_sha256", {}).items():
+        if path in artifacts:
+            continue
+        target = root / safe_relative(path)
+        if not target.exists():
+            continue
+        if (PurePosixPath(path).parts[0] not in {"Clash", "Surge", "Sources", "Text", "examples", "metadata"}
+                or target.is_symlink() or not target.resolve().is_relative_to(root.resolve())
+                or not target.is_file() or digest(target.read_bytes()) != expected_hash):
+            raise ValueError(f"Refusing to remove modified/unsafe obsolete output: {path}")
+        stale.append(path)
     # Record the last PUBLISHED source version. A daily upstream rebuild alone must not make a commit.
-    if changed or not (root / "metadata/sync-state.json").exists():
+    if changed or stale or not (root / "metadata/sync-state.json").exists():
         artifacts = {**artifacts, "metadata/sync-state.json": json_bytes(state)}
     if check:
-        if changed:
-            raise ValueError("Generated files differ: " + ", ".join(changed))
+        if changed or stale:
+            raise ValueError("Generated files differ: " + ", ".join(changed + stale))
         print("All generated files match the pinned inputs")
         return False
     # No tracked output is touched until every download/conversion/validation has succeeded.
@@ -387,8 +469,11 @@ def publish(root: Path, artifacts: dict[str, bytes], state: dict, check: bool) -
             temp_path = Path(temporary.name)
         temp_path.chmod(0o644)
         temp_path.replace(target)
+    for path in stale:
+        (root / path).unlink()
+        print(f"Removed obsolete generated file (recoverable in Git): {path}")
     print(f"Generated content changed in {len(changed)} files")
-    return bool(changed)
+    return bool(changed or stale)
 
 
 def main():
@@ -413,17 +498,25 @@ def main():
     version = subprocess.check_output([str(mihomo), "-v"], text=True, timeout=10).splitlines()[0]
     if "v1.19.32 " not in version:
         raise ValueError("Use the pinned Mihomo v1.19.32 for reproducible output")
-    remote_rules = [r for r in manifest["rules"] if "upstream" in r]
+    remote_rules = [source for r in manifest["rules"] for source in
+                    ([r] if "upstream" in r else r.get("inputs", []))]
+    urls = sorted({source_url(r, snapshots) for r in remote_rules})
     with ThreadPoolExecutor(max_workers=4) as pool:
-        blobs = dict(zip((r["name"] for r in remote_rules), pool.map(lambda r: fetch(source_url(r, snapshots)), remote_rules)))
+        blobs = dict(zip(urls, pool.map(fetch, urls)))
     artifacts, records = {}, {}
     for rule in manifest["rules"]:
-        outputs, record = build_rule(rule, blobs.get(rule["name"]), snapshots, overrides,
+        data = ({c["id"]: blobs[source_url(c, snapshots)] for c in rule["inputs"]} if "inputs" in rule else
+                blobs[source_url(rule, snapshots)] if "upstream" in rule else None)
+        outputs, record = build_rule(rule, data, snapshots, overrides,
                                      previous.get("rules", {}).get(rule["name"], {}),
                                      mihomo, ROOT, args.allow_large_change)
         artifacts.update(outputs)
         records[rule["name"]] = record
-    artifacts.update(render_examples(manifest))
+    contract = json.loads((ROOT / "custom/classification.json").read_text())
+    domain_sets = {r["name"]: artifacts[f"Text/{r.get('output', r['name'])}.list"].decode().splitlines()
+                   for r in manifest["rules"] if r["behavior"] == "domain" and r.get("surge", True)}
+    artifacts["metadata/classification-audit.json"] = json_bytes(audit_classification(domain_sets, contract))
+    artifacts.update(render_examples(manifest, contract))
     state = {"schema_version": 1, "converter": "mihomo v1.19.32", "upstreams": snapshots, "rules": records,
              "output_sha256": {path: digest(data) for path, data in sorted(artifacts.items())}}
     changed = publish(ROOT, artifacts, state, args.check)

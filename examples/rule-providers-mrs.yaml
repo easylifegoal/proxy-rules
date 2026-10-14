@@ -22,6 +22,13 @@ rule-providers:
     interval: 86400
     path: ./ruleset/ai.mrs
     url: https://raw.githubusercontent.com/easylifegoal/proxy-rules/main/Clash/ai.mrs
+  "claude_domain":
+    type: http
+    behavior: domain
+    format: mrs
+    interval: 86400
+    path: ./ruleset/claude_domain.mrs
+    url: https://raw.githubusercontent.com/easylifegoal/proxy-rules/main/Clash/claude_domain.mrs
   "github_domain":
     type: http
     behavior: domain
@@ -43,6 +50,13 @@ rule-providers:
     interval: 86400
     path: ./ruleset/global_media_domain.mrs
     url: https://raw.githubusercontent.com/easylifegoal/proxy-rules/main/Clash/global_media_domain.mrs
+  "youtube_domain":
+    type: http
+    behavior: domain
+    format: mrs
+    interval: 86400
+    path: ./ruleset/youtube_domain.mrs
+    url: https://raw.githubusercontent.com/easylifegoal/proxy-rules/main/Clash/youtube_domain.mrs
   "netflix_domain":
     type: http
     behavior: domain

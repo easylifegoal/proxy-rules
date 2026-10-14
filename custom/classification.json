@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "domain_priority": ["claude_domain", "ai", "netflix_domain", "youtube_domain", "global_media_domain", "onedrive_domain", "github_domain", "paypal_domain", "usbank_domain", "telegram_domain", "google_domain", "microsoft_domain", "apple_domain"],
+  "disjoint": [["global_media_domain", "claude_domain"], ["global_media_domain", "ai"]],
+  "subsets": [["claude_domain", "ai"], ["netflix_domain", "global_media_domain"], ["youtube_domain", "global_media_domain"]],
+  "priority_overlaps": [["claude_domain", "ai"], ["ai", "google_domain"], ["ai", "microsoft_domain"], ["youtube_domain", "global_media_domain"], ["youtube_domain", "google_domain"], ["netflix_domain", "global_media_domain"], ["global_media_domain", "google_domain"], ["global_media_domain", "apple_domain"], ["onedrive_domain", "microsoft_domain"], ["github_domain", "microsoft_domain"]],
+  "forbidden": {
+    "global_media_domain": ["claude.ai", "api.anthropic.com", "claudeusercontent.com", "chatgpt.com", "gemini.google.com", "store.steampowered.com", "store.epicgames.com", "archiveofourown.org", "fanfiction.net", "disneylandparis.com", "marvelsuperwar.com", "example.cloudfront.net", "unrelated.amazonaws.com"]
+  },
+  "samples": [
+    {"domain": "claude.ai", "expected": "claude_domain"},
+    {"domain": "api.anthropic.com", "expected": "claude_domain"},
+    {"domain": "files.claudeusercontent.com", "expected": "claude_domain"},
+    {"domain": "chatgpt.com", "expected": "ai"},
+    {"domain": "gemini.google.com", "expected": "ai"},
+    {"domain": "copilot.microsoft.com", "expected": "ai"},
+    {"domain": "www.netflix.com", "expected": "netflix_domain"},
+    {"domain": "www.youtube.com", "expected": "youtube_domain"},
+    {"domain": "rr1.googlevideo.com", "expected": "youtube_domain"},
+    {"domain": "www.disneyplus.com", "expected": "global_media_domain"},
+    {"domain": "www.max.com", "expected": "global_media_domain"},
+    {"domain": "www.primevideo.com", "expected": "global_media_domain"},
+    {"domain": "tv.apple.com", "expected": "global_media_domain"},
+    {"domain": "music.apple.com", "expected": "global_media_domain"},
+    {"domain": "podcasts.apple.com", "expected": "global_media_domain"},
+    {"domain": "open.spotify.com", "expected": "global_media_domain"},
+    {"domain": "www.twitch.tv", "expected": "global_media_domain"},
+    {"domain": "onedrive.live.com", "expected": "onedrive_domain"},
+    {"domain": "github.com", "expected": "github_domain"},
+    {"domain": "www.paypal.com", "expected": "paypal_domain"},
+    {"domain": "www.bankofamerica.com", "expected": "usbank_domain"},
+    {"domain": "web.telegram.org", "expected": "telegram_domain"},
+    {"domain": "www.google.com", "expected": "google_domain"},
+    {"domain": "www.microsoft.com", "expected": "microsoft_domain"},
+    {"domain": "www.apple.com", "expected": "apple_domain"},
+    {"domain": "store.steampowered.com", "expected": null},
+    {"domain": "archiveofourown.org", "expected": null},
+    {"domain": "disneylandparis.com", "expected": null}
+  ]
+}

@@ -1,5 +1,7 @@
 # Clash / Surge 规则源对比与统一范围
 
+> 这是第一版 21 组规则构建时的历史对比快照。随后按长期分类要求升级为 23 组：GlobalMedia 改为明确影音服务聚合，并新增 Claude / YouTube 独立分类。下文“统一版本”描述第一版，不是当前 GlobalMedia 配方。当前方案见 [长期分类设计](classification-design.md)。客户端配置在这两次仓库建设中均未修改。
+
 核对日期：2026-10-14。核对对象是 iCloud 中的 Clash `Mixed.yaml` 与 Surge `Mixed.conf` 所引用的公开规则源，不是客户端当前缓存内容或流量日志。本报告不上传完整配置、节点、账号、SSID 或内网信息。
 
 ## 结论

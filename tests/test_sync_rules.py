@@ -12,7 +12,23 @@ class ValidationTests(unittest.TestCase):
     def test_current_manifest(self):
         manifest = json.loads((sync.ROOT / 'sources.json').read_text())
         sync.validate_manifest(manifest)
-        self.assertEqual(len(manifest['rules']), 21)
+        self.assertEqual(len(manifest['rules']), 23)
+
+    def test_invalid_composition_rejected(self):
+        for inputs in ([], [{'id': '../bad', 'upstream': 'metacubex', 'path': 'a.mrs', 'minimum_entries': 1}],
+                       [{'id': 'a', 'upstream': 'missing', 'path': 'a.mrs', 'minimum_entries': 1}]):
+            manifest = json.loads((sync.ROOT / 'sources.json').read_text())
+            media = next(r for r in manifest['rules'] if r['name'] == 'global_media_domain')
+            media['inputs'] = inputs
+            with self.subTest(inputs=inputs), self.assertRaises(ValueError):
+                sync.validate_manifest(manifest)
+
+    def test_duplicate_composition_component_rejected(self):
+        manifest = json.loads((sync.ROOT / 'sources.json').read_text())
+        media = next(r for r in manifest['rules'] if r['name'] == 'global_media_domain')
+        media['inputs'].append(media['inputs'][0])
+        with self.assertRaisesRegex(ValueError, 'component'):
+            sync.validate_manifest(manifest)
 
     def test_reject_format_behavior_mismatch(self):
         manifest = json.loads((sync.ROOT / 'sources.json').read_text())
@@ -51,6 +67,17 @@ class ValidationTests(unittest.TestCase):
         self.assertIn('/Clash/apns.yaml', example)
         self.assertNotIn('apns.mrs', example)
         self.assertIn('/Clash/google.mrs', example)
+
+    def test_business_examples_follow_same_contract_order(self):
+        manifest = {'publish_repository': 'test/repo', 'rules': [
+            {'name': 'ai', 'behavior': 'domain'}, {'name': 'claude', 'behavior': 'domain'}]}
+        examples = sync.render_examples(manifest, {'domain_priority': ['claude', 'ai']})
+        clash = examples['examples/business-rules-clash.yaml'].decode()
+        surge = examples['examples/business-rules-surge.conf'].decode()
+        self.assertLess(clash.index('RULE-SET,claude'), clash.index('RULE-SET,ai'))
+        self.assertLess(surge.index('/Surge/claude.list'), surge.index('/Surge/ai.list'))
+        self.assertIn('POLICY_claude', clash)
+        self.assertNotIn('FINAL,', surge)
 
     def test_classical_build_preserves_raw_input_without_mrs(self):
         rule = {'name': 'apns', 'behavior': 'classical', 'input_format': 'classical',
@@ -161,9 +188,50 @@ class ValidationTests(unittest.TestCase):
                 sync.publish(root, {'Text/test.list': b'a.com\n'}, {}, True)
             self.assertEqual(list(root.iterdir()), [])
 
+    def test_only_unchanged_recorded_obsolete_outputs_pruned(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            old = b'example.com\n'
+            state = {'output_sha256': {'Sources/old.txt': sync.digest(old)}}
+            sync.publish(root, {'Sources/old.txt': old}, state, False)
+            with self.assertRaises(ValueError):
+                sync.publish(root, {}, {'output_sha256': {}}, True)
+            self.assertTrue((root / 'Sources/old.txt').exists())
+            sync.publish(root, {}, {'output_sha256': {}}, False)
+            self.assertFalse((root / 'Sources/old.txt').exists())
+
+    def test_modified_obsolete_outputs_protected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            old = b'example.com\n'
+            state = {'output_sha256': {'Sources/old.txt': sync.digest(old)}}
+            sync.publish(root, {'Sources/old.txt': old}, state, False)
+            (root / 'Sources/old.txt').write_text('user edit\n')
+            with self.assertRaisesRegex(ValueError, 'Refusing'):
+                sync.publish(root, {}, {}, False)
+            self.assertEqual((root / 'Sources/old.txt').read_text(), 'user edit\n')
+
 
 @unittest.skipUnless((sync.ROOT / '.tools/mihomo').is_file(), 'Pinned Mihomo converter not installed')
 class ConverterTests(unittest.TestCase):
+    def test_composition_deduplicates_and_preserves_component_sources(self):
+        data = (sync.ROOT / 'Clash/usbank.mrs').read_bytes()
+        rule = {'name': 'bundle', 'behavior': 'domain', 'minimum_entries': 1, 'inputs': [
+            {'id': 'first', 'upstream': 'test', 'path': 'a.mrs', 'minimum_entries': 1},
+            {'id': 'second', 'upstream': 'test', 'path': 'b.mrs', 'minimum_entries': 1, 'select': ['+.bofa.com']}]}
+        snapshots = {'test': {'repository': 'test/repo', 'sha': 'a' * 40}}
+        artifacts, record = sync.build_rule(rule, {'first': data, 'second': data}, snapshots, {}, {},
+                                            sync.ROOT / '.tools/mihomo', sync.ROOT, False)
+        self.assertEqual(record['output_entries'], 6)
+        self.assertEqual(record['components']['second']['selected_entries'], 1)
+        self.assertEqual(artifacts['Sources/bundle/first.mrs'], data)
+        self.assertEqual(artifacts['Sources/bundle/second.mrs'], data)
+        self.assertFalse(record['upstream_mrs_preserved'])
+        rule['inputs'][1]['select'] = ['+.not-in-source.example']
+        with self.assertRaisesRegex(ValueError, 'absent upstream'):
+            sync.build_rule(rule, {'first': data, 'second': data}, snapshots, {}, {},
+                            sync.ROOT / '.tools/mihomo', sync.ROOT, False)
+
     def test_suffix_scope_and_bank_alias(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

@@ -1,0 +1,17 @@
+# Business-domain ordering fragment ONLY; not a complete profile.
+# Replace POLICY_* with existing client policies. Do not overwrite your rules.
+# Preserve Wi-Fi, local exceptions, APNS (before Apple), service IP rules and fallback.
+rules:
+  - "RULE-SET,claude_domain,POLICY_claude_domain"
+  - "RULE-SET,ai,POLICY_ai"
+  - "RULE-SET,netflix_domain,POLICY_netflix_domain"
+  - "RULE-SET,youtube_domain,POLICY_youtube_domain"
+  - "RULE-SET,global_media_domain,POLICY_global_media_domain"
+  - "RULE-SET,onedrive_domain,POLICY_onedrive_domain"
+  - "RULE-SET,github_domain,POLICY_github_domain"
+  - "RULE-SET,paypal_domain,POLICY_paypal_domain"
+  - "RULE-SET,usbank_domain,POLICY_usbank_domain"
+  - "RULE-SET,telegram_domain,POLICY_telegram_domain"
+  - "RULE-SET,google_domain,POLICY_google_domain"
+  - "RULE-SET,microsoft_domain,POLICY_microsoft_domain"
+  - "RULE-SET,apple_domain,POLICY_apple_domain"

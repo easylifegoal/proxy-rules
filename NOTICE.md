@@ -25,6 +25,12 @@ files are generated representations, with optional explicit modifications from
 `custom/overrides.json`. For unchanged input, the published MRS is byte-for-byte
 identical to the upstream binary. Generated representations of upstream rules
 remain subject to the upstream GPL terms and any applicable original notices.
+The curated GlobalMedia bundle combines the explicitly listed MetaCubeX service
+inputs in `sources.json`. Each raw component is retained under
+`Sources/global_media_domain/`, with provenance and any explicit Disney+ selection
+recorded in `metadata/sync-state.json`. Its output MRS is compiled from the union,
+not represented as an unchanged upstream binary. Selection does not replace the
+original data license or imply a new license grant.
 The APNS classical set is kept intact across YAML and Surge outputs; no partial
 MRS representation is published. The source-comparison document cites additional
 legacy rule sources for comparison only; it does not mirror those full datasets.

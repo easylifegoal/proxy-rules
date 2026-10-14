@@ -6,10 +6,10 @@
 
 [工作流与运行记录](https://github.com/easylifegoal/proxy-rules/actions/workflows/sync-rules.yml)
 
-结合 Clash 与 Surge 当前引用的规则，共 21 组：MetaCubeX 18 组、APNS 1 组、Fake-IP 排除名单 1 组、手动维护的银行域名 1 组。
+结合 Clash 与 Surge 的分类需求，共 23 组：MetaCubeX 派生分类 20 组（含服务清单聚合的 GlobalMedia）、APNS 1 组、Fake-IP 排除名单 1 组、手动维护的银行域名 1 组。
 不上传节点、密码、UUID、私钥或完整代理配置，也不会自动修改任何客户端配置。
 
-[两端规则源对比与统一范围](docs/source-comparison.md) 说明旧名单的差异、统一版的取舍和迁移注意事项。**构建完成不代表客户端已切换订阅**；各自策略、Wi-Fi 场景、规则顺序和兜底继续由原配置控制。
+[长期分类方案](docs/classification-design.md) 说明当前规则边界、媒体服务清单、优先级与自动检查；[两端旧规则源对比](docs/source-comparison.md) 保留迁移前的审计快照。**构建完成不代表客户端已切换订阅**；各自策略、Wi-Fi 场景、规则顺序和兜底继续由原配置控制。
 
 - **计划每天 09:17（北京时间 / 新加坡时间，UTC+8）更新**，也支持 Actions → Run workflow 手动运行。
 - GitHub 定时任务不保证准点；长时间无仓库活动时可能暂停，请以 Actions 的实际成功记录为准。
@@ -24,7 +24,8 @@
 | 规则 | 来源 |
 | --- | --- |
 | AI、GitHub、Telegram、Netflix、PayPal、OneDrive、微软、Google、Apple、私有域名、国内域名、国外域名 | MetaCubeX `meta/geo/geosite` |
-| `global_media_domain` | MetaCubeX `category-entertainment`，沿用现有名单；除流媒体还包含游戏、小说等，不是纯视频集合 |
+| `claude_domain` / `youtube_domain` | MetaCubeX `anthropic.mrs` / `youtube.mrs`，可单独路由；仍分别属于 AI / GlobalMedia 大集合 |
+| `global_media_domain` | 在 `sources.json` 明确列出 20 个影音服务，同一 MetaCubeX 快照聚合；**不再使用 category-entertainment**，不引入游戏、小说或 AI 大分类；Disney+ 使用审核过的精确条目白名单 |
 | 私有、中国、Telegram、Netflix IP | MetaCubeX `meta/geo/geoip` |
 | Apple IP | MetaCubeX `meta/geo-lite/geoip/apple.mrs`，保留原来的 lite 来源 |
 | `google_domain` | MetaCubeX `google.mrs`，**包含 YouTube**；不引入整份 Google/云平台 IP 集合，也不等同于旧 Surge Google 混合名单 |
@@ -44,6 +45,7 @@
 | `Surge/<名称>.list` | Surge RULE-SET，不包含策略名称；IP 规则带 no-resolve |
 | `Sources/*` | 未修改的上游 MRS / classical 原文，以及规范化文本，用于审核与重新生成 |
 | `metadata/sync-state.json` | 最后一次发布使用的源版本、哈希及条数，不是最近一次检查时间 |
+| `metadata/classification-audit.json` | 分类互斥、包含关系、允许的跨分类重叠，以及典型域名的建议匹配结果 |
 
 例如 Netflix：
 
@@ -54,6 +56,8 @@
 完整的 **provider 配置片段**见 [MRS 示例](examples/rule-providers-mrs.yaml)、[YAML 示例](examples/rule-providers-yaml.yaml)。保留自己的规则顺序、策略名称、节点及 DNS 设置，不要将片段覆盖成完整配置。
 [Surge 示例](examples/surge-rules.conf) 中的 `POLICY` 必须替换；列表顺序只是清单顺序，不是建议的分流顺序。
 
+需要参考长期业务分类的先后关系时，使用 [Clash 业务顺序片段](examples/business-rules-clash.yaml) / [Surge 业务顺序片段](examples/business-rules-surge.conf)。两份由同一份分类约束生成，只含业务域名规则，不能替换完整配置；策略占位符需映射到各自已有策略。
+
 MRS 示例是 **MRS 优先**，其中 APNS 自动使用 `behavior: classical`、`format: yaml`。MRS 不支持关键词规则，不能把 APNS 的域名/IP 部分单独转成 MRS 就声称完整等价。APNS 的 YAML 与 Surge 文件包含同一套规则。
 
 `fakeipfilter_domain` 是 Mihomo 的 **DNS Fake-IP 排除名单**，不是路由策略，因此不生成 Surge 路由文件。它包含 Mihomo 的单层通配符，不能直接换成 Surge 的跨层通配符；其余规则若将来出现不能等价转换的模式，构建会停止，绝不静默扩大匹配范围。
@@ -61,6 +65,10 @@ MRS 示例是 **MRS 优先**，其中 APNS 自动使用 `behavior: classical`、
 MetaCubeX 跨格式生成以当前 **MRS 实际包含的规则**为基准。其他旧 classical 名单中的正则、关键词、进程、User-Agent 和 ASN 规则不会自动合并；这不是旧 Surge 名单的逐条镜像，差异详见对比文档。未做自定义修改的 MRS 会原样发布，不重新压缩替换。
 
 APNS 是显式的 classical 例外。目前仅接受两端共有的 `DOMAIN`、`DOMAIN-SUFFIX`、`DOMAIN-KEYWORD`、`IP-CIDR`、`IP-CIDR6` 及 IP 的 `no-resolve`。遇到新增的未知类型、选项或夹带策略名会阻止发布，不能静默丢弃。
+
+GlobalMedia 聚合时保留每个组件的原始 MRS、解码文本、SHA 与条数。每个组件分别执行格式和数量检查，避免一个服务丢失被其他服务新增掩盖。服务清单不会随娱乐大分类自动扩张。Disney+ 白名单中若有条目从上游消失，构建报错；新增条目需要审核后补入。
+
+`custom/classification.json` 定义分类约束：媒体与 Claude / AI 不得交叉（包括父后缀覆盖）；Claude 必须属于 AI，Netflix / YouTube 必须属于媒体集合。合理的 Google / Apple 等交叉被记录并检查建议优先级。分类失败与数量异常分开，`--allow-large-change` **不能跳过分类检查**。
 
 ### 如何维护
 
@@ -73,6 +81,11 @@ APNS 是显式的 classical 例外。目前仅接受两端共有的 `DOMAIN`、`
    ```
 
    上述只是语法示例，不表示 example.com 属于 Netflix。`remove` 是对 `Sources/<名称>.txt` 中条目的**精确删除**，不是排除任意子域名：若祖先后缀或更大 IP 网段仍在，访问仍可能匹配。需要例外路由时优先在主配置前面加规则。删除不存在的条目会报错，防止过期的自定义项被静默忽略。
+
+4. 维护媒体服务：编辑 `global_media_domain.inputs`。每项必须指定原始路径和最低条数；`select` 为可选的精确条目白名单，未列入的条目不会自动导入。不要用整份娱乐、公司或云厂商集合代替服务列表。
+5. 增加边界/回归检查：编辑 `custom/classification.json`，添加代表性域名、禁止匹配域名或分类关系。共享基础设施出现跨类时先审核，不自动删除整段 CDN。
+
+构建会清理旧状态中登记、但已不再生成的文件；只允许删除内容哈希未改变的生成文件，手动修改过的旧文件会阻止清理。历史版本仍可从 Git 找回。
 
 ### 本地验证和回退
 

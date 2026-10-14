@@ -1,0 +1,889 @@
+{
+  "disjoint": [
+    {
+      "left": "global_media_domain",
+      "overlap_count": 0,
+      "right": "claude_domain"
+    },
+    {
+      "left": "global_media_domain",
+      "overlap_count": 0,
+      "right": "ai"
+    }
+  ],
+  "domain_priority": [
+    "claude_domain",
+    "ai",
+    "netflix_domain",
+    "youtube_domain",
+    "global_media_domain",
+    "onedrive_domain",
+    "github_domain",
+    "paypal_domain",
+    "usbank_domain",
+    "telegram_domain",
+    "google_domain",
+    "microsoft_domain",
+    "apple_domain"
+  ],
+  "forbidden": [
+    {
+      "domain": "claude.ai",
+      "matched": false,
+      "rule": "global_media_domain"
+    },
+    {
+      "domain": "api.anthropic.com",
+      "matched": false,
+      "rule": "global_media_domain"
+    },
+    {
+      "domain": "claudeusercontent.com",
+      "matched": false,
+      "rule": "global_media_domain"
+    },
+    {
+      "domain": "chatgpt.com",
+      "matched": false,
+      "rule": "global_media_domain"
+    },
+    {
+      "domain": "gemini.google.com",
+      "matched": false,
+      "rule": "global_media_domain"
+    },
+    {
+      "domain": "store.steampowered.com",
+      "matched": false,
+      "rule": "global_media_domain"
+    },
+    {
+      "domain": "store.epicgames.com",
+      "matched": false,
+      "rule": "global_media_domain"
+    },
+    {
+      "domain": "archiveofourown.org",
+      "matched": false,
+      "rule": "global_media_domain"
+    },
+    {
+      "domain": "fanfiction.net",
+      "matched": false,
+      "rule": "global_media_domain"
+    },
+    {
+      "domain": "disneylandparis.com",
+      "matched": false,
+      "rule": "global_media_domain"
+    },
+    {
+      "domain": "marvelsuperwar.com",
+      "matched": false,
+      "rule": "global_media_domain"
+    },
+    {
+      "domain": "example.cloudfront.net",
+      "matched": false,
+      "rule": "global_media_domain"
+    },
+    {
+      "domain": "unrelated.amazonaws.com",
+      "matched": false,
+      "rule": "global_media_domain"
+    }
+  ],
+  "priority_overlaps": [
+    {
+      "after": "ai",
+      "before": "claude_domain",
+      "examples": [
+        {
+          "left_entry": "+.anthropic.com",
+          "right_entry": "+.anthropic.com",
+          "witness": "anthropic.com"
+        },
+        {
+          "left_entry": "+.clau.de",
+          "right_entry": "+.clau.de",
+          "witness": "clau.de"
+        },
+        {
+          "left_entry": "+.claude.ai",
+          "right_entry": "+.claude.ai",
+          "witness": "claude.ai"
+        },
+        {
+          "left_entry": "+.claude.com",
+          "right_entry": "+.claude.com",
+          "witness": "claude.com"
+        },
+        {
+          "left_entry": "+.claude.dev",
+          "right_entry": "+.claude.dev",
+          "witness": "claude.dev"
+        },
+        {
+          "left_entry": "+.claudemcpclient.com",
+          "right_entry": "+.claudemcpclient.com",
+          "witness": "claudemcpclient.com"
+        },
+        {
+          "left_entry": "+.claudemcpcontent.com",
+          "right_entry": "+.claudemcpcontent.com",
+          "witness": "claudemcpcontent.com"
+        },
+        {
+          "left_entry": "+.claudeusercontent.com",
+          "right_entry": "+.claudeusercontent.com",
+          "witness": "claudeusercontent.com"
+        },
+        {
+          "left_entry": "servd-anthropic-website.b-cdn.net",
+          "right_entry": "servd-anthropic-website.b-cdn.net",
+          "witness": "servd-anthropic-website.b-cdn.net"
+        }
+      ],
+      "overlap_count": 9
+    },
+    {
+      "after": "google_domain",
+      "before": "ai",
+      "examples": [
+        {
+          "left_entry": "+.ai.studio",
+          "right_entry": "+.ai.studio",
+          "witness": "ai.studio"
+        },
+        {
+          "left_entry": "+.aicode.googleapis.com",
+          "right_entry": "+.googleapis.com",
+          "witness": "aicode.googleapis.com"
+        },
+        {
+          "left_entry": "+.aida.googleapis.com",
+          "right_entry": "+.googleapis.com",
+          "witness": "aida.googleapis.com"
+        },
+        {
+          "left_entry": "+.aisandbox-pa.googleapis.com",
+          "right_entry": "+.googleapis.com",
+          "witness": "aisandbox-pa.googleapis.com"
+        },
+        {
+          "left_entry": "+.aistudio.google.com",
+          "right_entry": "+.google.com",
+          "witness": "aistudio.google.com"
+        },
+        {
+          "left_entry": "+.antigravity-unleash.goog",
+          "right_entry": "+.goog",
+          "witness": "antigravity-unleash.goog"
+        },
+        {
+          "left_entry": "+.antigravity.google",
+          "right_entry": "+.google",
+          "witness": "antigravity.google"
+        },
+        {
+          "left_entry": "+.bard.google.com",
+          "right_entry": "+.google.com",
+          "witness": "bard.google.com"
+        },
+        {
+          "left_entry": "+.deepmind.com",
+          "right_entry": "+.deepmind.com",
+          "witness": "deepmind.com"
+        },
+        {
+          "left_entry": "+.deepmind.google",
+          "right_entry": "+.google",
+          "witness": "deepmind.google"
+        }
+      ],
+      "overlap_count": 59
+    },
+    {
+      "after": "microsoft_domain",
+      "before": "ai",
+      "examples": [
+        {
+          "left_entry": "+.coderabbit.gallery.vsassets.io",
+          "right_entry": "+.vsassets.io",
+          "witness": "coderabbit.gallery.vsassets.io"
+        },
+        {
+          "left_entry": "+.copilot-stg.com",
+          "right_entry": "+.copilot-stg.com",
+          "witness": "copilot-stg.com"
+        },
+        {
+          "left_entry": "+.copilot.cloud.microsoft",
+          "right_entry": "+.microsoft",
+          "witness": "copilot.cloud.microsoft"
+        },
+        {
+          "left_entry": "+.copilot.com",
+          "right_entry": "+.copilot.com",
+          "witness": "copilot.com"
+        },
+        {
+          "left_entry": "+.copilot.microsoft.com",
+          "right_entry": "+.microsoft.com",
+          "witness": "copilot.microsoft.com"
+        },
+        {
+          "left_entry": "+.githubcopilot.com",
+          "right_entry": "+.githubcopilot.com",
+          "witness": "githubcopilot.com"
+        },
+        {
+          "left_entry": "copilot-proxy.githubusercontent.com",
+          "right_entry": "+.githubusercontent.com",
+          "witness": "copilot-proxy.githubusercontent.com"
+        },
+        {
+          "left_entry": "copilot-proxy.githubusercontent.com",
+          "right_entry": "copilot-proxy.githubusercontent.com",
+          "witness": "copilot-proxy.githubusercontent.com"
+        },
+        {
+          "left_entry": "copilot-telemetry-service.githubusercontent.com",
+          "right_entry": "+.githubusercontent.com",
+          "witness": "copilot-telemetry-service.githubusercontent.com"
+        },
+        {
+          "left_entry": "copilot-telemetry-service.githubusercontent.com",
+          "right_entry": "copilot-telemetry-service.githubusercontent.com",
+          "witness": "copilot-telemetry-service.githubusercontent.com"
+        }
+      ],
+      "overlap_count": 21
+    },
+    {
+      "after": "global_media_domain",
+      "before": "youtube_domain",
+      "examples": [
+        {
+          "left_entry": "+.ads.youtube.com",
+          "right_entry": "+.ads.youtube.com",
+          "witness": "ads.youtube.com"
+        },
+        {
+          "left_entry": "+.ads.youtube.com",
+          "right_entry": "+.youtube.com",
+          "witness": "ads.youtube.com"
+        },
+        {
+          "left_entry": "+.ggpht.cn",
+          "right_entry": "+.ggpht.cn",
+          "witness": "ggpht.cn"
+        },
+        {
+          "left_entry": "+.ggpht.com",
+          "right_entry": "+.ggpht.com",
+          "witness": "ggpht.com"
+        },
+        {
+          "left_entry": "+.googlevideo.com",
+          "right_entry": "+.googlevideo.com",
+          "witness": "googlevideo.com"
+        },
+        {
+          "left_entry": "+.wide-youtube.l.google.com",
+          "right_entry": "+.wide-youtube.l.google.com",
+          "witness": "wide-youtube.l.google.com"
+        },
+        {
+          "left_entry": "+.withyoutube.com",
+          "right_entry": "+.withyoutube.com",
+          "witness": "withyoutube.com"
+        },
+        {
+          "left_entry": "+.youtu.be",
+          "right_entry": "+.youtu.be",
+          "witness": "youtu.be"
+        },
+        {
+          "left_entry": "+.youtube",
+          "right_entry": "+.youtube",
+          "witness": "youtube"
+        },
+        {
+          "left_entry": "+.youtube-nocookie.com",
+          "right_entry": "+.youtube-nocookie.com",
+          "witness": "youtube-nocookie.com"
+        }
+      ],
+      "overlap_count": 180
+    },
+    {
+      "after": "google_domain",
+      "before": "youtube_domain",
+      "examples": [
+        {
+          "left_entry": "+.ads.youtube.com",
+          "right_entry": "+.ads.youtube.com",
+          "witness": "ads.youtube.com"
+        },
+        {
+          "left_entry": "+.ads.youtube.com",
+          "right_entry": "+.youtube.com",
+          "witness": "ads.youtube.com"
+        },
+        {
+          "left_entry": "+.ggpht.cn",
+          "right_entry": "+.ggpht.cn",
+          "witness": "ggpht.cn"
+        },
+        {
+          "left_entry": "+.ggpht.com",
+          "right_entry": "+.ggpht.com",
+          "witness": "ggpht.com"
+        },
+        {
+          "left_entry": "+.googlevideo.com",
+          "right_entry": "+.googlevideo.com",
+          "witness": "googlevideo.com"
+        },
+        {
+          "left_entry": "+.wide-youtube.l.google.com",
+          "right_entry": "+.google.com",
+          "witness": "wide-youtube.l.google.com"
+        },
+        {
+          "left_entry": "+.withyoutube.com",
+          "right_entry": "+.withyoutube.com",
+          "witness": "withyoutube.com"
+        },
+        {
+          "left_entry": "+.youtu.be",
+          "right_entry": "+.youtu.be",
+          "witness": "youtu.be"
+        },
+        {
+          "left_entry": "+.youtube",
+          "right_entry": "+.youtube",
+          "witness": "youtube"
+        },
+        {
+          "left_entry": "+.youtube-nocookie.com",
+          "right_entry": "+.youtube-nocookie.com",
+          "witness": "youtube-nocookie.com"
+        }
+      ],
+      "overlap_count": 182
+    },
+    {
+      "after": "global_media_domain",
+      "before": "netflix_domain",
+      "examples": [
+        {
+          "left_entry": "+.fast.com",
+          "right_entry": "+.fast.com",
+          "witness": "fast.com"
+        },
+        {
+          "left_entry": "+.netflix.ca",
+          "right_entry": "+.netflix.ca",
+          "witness": "netflix.ca"
+        },
+        {
+          "left_entry": "+.netflix.com",
+          "right_entry": "+.netflix.com",
+          "witness": "netflix.com"
+        },
+        {
+          "left_entry": "+.netflix.net",
+          "right_entry": "+.netflix.net",
+          "witness": "netflix.net"
+        },
+        {
+          "left_entry": "+.netflixdnstest0.com",
+          "right_entry": "+.netflixdnstest0.com",
+          "witness": "netflixdnstest0.com"
+        },
+        {
+          "left_entry": "+.netflixdnstest1.com",
+          "right_entry": "+.netflixdnstest1.com",
+          "witness": "netflixdnstest1.com"
+        },
+        {
+          "left_entry": "+.netflixdnstest10.com",
+          "right_entry": "+.netflixdnstest10.com",
+          "witness": "netflixdnstest10.com"
+        },
+        {
+          "left_entry": "+.netflixdnstest2.com",
+          "right_entry": "+.netflixdnstest2.com",
+          "witness": "netflixdnstest2.com"
+        },
+        {
+          "left_entry": "+.netflixdnstest3.com",
+          "right_entry": "+.netflixdnstest3.com",
+          "witness": "netflixdnstest3.com"
+        },
+        {
+          "left_entry": "+.netflixdnstest4.com",
+          "right_entry": "+.netflixdnstest4.com",
+          "witness": "netflixdnstest4.com"
+        }
+      ],
+      "overlap_count": 24
+    },
+    {
+      "after": "google_domain",
+      "before": "global_media_domain",
+      "examples": [
+        {
+          "left_entry": "+.ads.youtube.com",
+          "right_entry": "+.ads.youtube.com",
+          "witness": "ads.youtube.com"
+        },
+        {
+          "left_entry": "+.ads.youtube.com",
+          "right_entry": "+.youtube.com",
+          "witness": "ads.youtube.com"
+        },
+        {
+          "left_entry": "+.ggpht.cn",
+          "right_entry": "+.ggpht.cn",
+          "witness": "ggpht.cn"
+        },
+        {
+          "left_entry": "+.ggpht.com",
+          "right_entry": "+.ggpht.com",
+          "witness": "ggpht.com"
+        },
+        {
+          "left_entry": "+.googlevideo.com",
+          "right_entry": "+.googlevideo.com",
+          "witness": "googlevideo.com"
+        },
+        {
+          "left_entry": "+.wide-youtube.l.google.com",
+          "right_entry": "+.google.com",
+          "witness": "wide-youtube.l.google.com"
+        },
+        {
+          "left_entry": "+.withyoutube.com",
+          "right_entry": "+.withyoutube.com",
+          "witness": "withyoutube.com"
+        },
+        {
+          "left_entry": "+.youtu.be",
+          "right_entry": "+.youtu.be",
+          "witness": "youtu.be"
+        },
+        {
+          "left_entry": "+.youtube",
+          "right_entry": "+.youtube",
+          "witness": "youtube"
+        },
+        {
+          "left_entry": "+.youtube-nocookie.com",
+          "right_entry": "+.youtube-nocookie.com",
+          "witness": "youtube-nocookie.com"
+        }
+      ],
+      "overlap_count": 182
+    },
+    {
+      "after": "apple_domain",
+      "before": "global_media_domain",
+      "examples": [
+        {
+          "left_entry": "+.applemusic.berlin",
+          "right_entry": "+.applemusic.berlin",
+          "witness": "applemusic.berlin"
+        },
+        {
+          "left_entry": "+.applemusic.co",
+          "right_entry": "+.applemusic.co",
+          "witness": "applemusic.co"
+        },
+        {
+          "left_entry": "+.applemusic.com",
+          "right_entry": "+.applemusic.com",
+          "witness": "applemusic.com"
+        },
+        {
+          "left_entry": "+.applemusic.com",
+          "right_entry": "tv.applemusic.com",
+          "witness": "tv.applemusic.com"
+        },
+        {
+          "left_entry": "+.applemusic.com.au",
+          "right_entry": "+.applemusic.com.au",
+          "witness": "applemusic.com.au"
+        },
+        {
+          "left_entry": "+.applemusic.hamburg",
+          "right_entry": "+.applemusic.hamburg",
+          "witness": "applemusic.hamburg"
+        },
+        {
+          "left_entry": "+.applemusic.wang",
+          "right_entry": "+.applemusic.wang",
+          "witness": "applemusic.wang"
+        },
+        {
+          "left_entry": "+.applemusicconnect.com",
+          "right_entry": "+.applemusicconnect.com",
+          "witness": "applemusicconnect.com"
+        },
+        {
+          "left_entry": "+.applemusicfestival.com",
+          "right_entry": "+.applemusicfestival.com",
+          "witness": "applemusicfestival.com"
+        },
+        {
+          "left_entry": "+.applepodcasts.com",
+          "right_entry": "+.applepodcasts.com",
+          "witness": "applepodcasts.com"
+        }
+      ],
+      "overlap_count": 52
+    },
+    {
+      "after": "microsoft_domain",
+      "before": "onedrive_domain",
+      "examples": [
+        {
+          "left_entry": "+.1drv.com",
+          "right_entry": "+.1drv.com",
+          "witness": "1drv.com"
+        },
+        {
+          "left_entry": "+.livefilestore.com",
+          "right_entry": "+.livefilestore.com",
+          "witness": "livefilestore.com"
+        },
+        {
+          "left_entry": "+.microsoftpersonalcontent.com",
+          "right_entry": "+.microsoftpersonalcontent.com",
+          "witness": "microsoftpersonalcontent.com"
+        },
+        {
+          "left_entry": "+.oneclient.sfx.ms",
+          "right_entry": "+.sfx.ms",
+          "witness": "oneclient.sfx.ms"
+        },
+        {
+          "left_entry": "+.onedrive",
+          "right_entry": "+.onedrive",
+          "witness": "onedrive"
+        },
+        {
+          "left_entry": "+.onedrive.com",
+          "right_entry": "+.onedrive.com",
+          "witness": "onedrive.com"
+        },
+        {
+          "left_entry": "+.onedrive.live.com",
+          "right_entry": "+.live.com",
+          "witness": "onedrive.live.com"
+        },
+        {
+          "left_entry": "+.onedriveupdater",
+          "right_entry": "+.onedriveupdater",
+          "witness": "onedriveupdater"
+        },
+        {
+          "left_entry": "+.photos.live.com",
+          "right_entry": "+.live.com",
+          "witness": "photos.live.com"
+        },
+        {
+          "left_entry": "+.sharepoint.cn",
+          "right_entry": "+.sharepoint.cn",
+          "witness": "sharepoint.cn"
+        }
+      ],
+      "overlap_count": 16
+    },
+    {
+      "after": "microsoft_domain",
+      "before": "github_domain",
+      "examples": [
+        {
+          "left_entry": "+.atom.io",
+          "right_entry": "+.atom.io",
+          "witness": "atom.io"
+        },
+        {
+          "left_entry": "+.cafe.github.com",
+          "right_entry": "+.cafe.github.com",
+          "witness": "cafe.github.com"
+        },
+        {
+          "left_entry": "+.cafe.github.com",
+          "right_entry": "+.github.com",
+          "witness": "cafe.github.com"
+        },
+        {
+          "left_entry": "+.collector.github.com",
+          "right_entry": "+.collector.github.com",
+          "witness": "collector.github.com"
+        },
+        {
+          "left_entry": "+.collector.github.com",
+          "right_entry": "+.github.com",
+          "witness": "collector.github.com"
+        },
+        {
+          "left_entry": "+.dependabot.com",
+          "right_entry": "+.dependabot.com",
+          "witness": "dependabot.com"
+        },
+        {
+          "left_entry": "+.gh.io",
+          "right_entry": "+.gh.io",
+          "witness": "gh.io"
+        },
+        {
+          "left_entry": "+.ghcr.io",
+          "right_entry": "+.ghcr.io",
+          "witness": "ghcr.io"
+        },
+        {
+          "left_entry": "+.ghe.com",
+          "right_entry": "+.ghe.com",
+          "witness": "ghe.com"
+        },
+        {
+          "left_entry": "+.git.io",
+          "right_entry": "+.git.io",
+          "witness": "git.io"
+        }
+      ],
+      "overlap_count": 98
+    }
+  ],
+  "samples": [
+    {
+      "all_matching_categories": [
+        "claude_domain",
+        "ai"
+      ],
+      "domain": "claude.ai",
+      "winner": "claude_domain"
+    },
+    {
+      "all_matching_categories": [
+        "claude_domain",
+        "ai"
+      ],
+      "domain": "api.anthropic.com",
+      "winner": "claude_domain"
+    },
+    {
+      "all_matching_categories": [
+        "claude_domain",
+        "ai"
+      ],
+      "domain": "files.claudeusercontent.com",
+      "winner": "claude_domain"
+    },
+    {
+      "all_matching_categories": [
+        "ai"
+      ],
+      "domain": "chatgpt.com",
+      "winner": "ai"
+    },
+    {
+      "all_matching_categories": [
+        "ai",
+        "google_domain"
+      ],
+      "domain": "gemini.google.com",
+      "winner": "ai"
+    },
+    {
+      "all_matching_categories": [
+        "ai",
+        "microsoft_domain"
+      ],
+      "domain": "copilot.microsoft.com",
+      "winner": "ai"
+    },
+    {
+      "all_matching_categories": [
+        "netflix_domain",
+        "global_media_domain"
+      ],
+      "domain": "www.netflix.com",
+      "winner": "netflix_domain"
+    },
+    {
+      "all_matching_categories": [
+        "youtube_domain",
+        "global_media_domain",
+        "google_domain"
+      ],
+      "domain": "www.youtube.com",
+      "winner": "youtube_domain"
+    },
+    {
+      "all_matching_categories": [
+        "youtube_domain",
+        "global_media_domain",
+        "google_domain"
+      ],
+      "domain": "rr1.googlevideo.com",
+      "winner": "youtube_domain"
+    },
+    {
+      "all_matching_categories": [
+        "global_media_domain"
+      ],
+      "domain": "www.disneyplus.com",
+      "winner": "global_media_domain"
+    },
+    {
+      "all_matching_categories": [
+        "global_media_domain"
+      ],
+      "domain": "www.max.com",
+      "winner": "global_media_domain"
+    },
+    {
+      "all_matching_categories": [
+        "global_media_domain"
+      ],
+      "domain": "www.primevideo.com",
+      "winner": "global_media_domain"
+    },
+    {
+      "all_matching_categories": [
+        "global_media_domain",
+        "apple_domain"
+      ],
+      "domain": "tv.apple.com",
+      "winner": "global_media_domain"
+    },
+    {
+      "all_matching_categories": [
+        "global_media_domain",
+        "apple_domain"
+      ],
+      "domain": "music.apple.com",
+      "winner": "global_media_domain"
+    },
+    {
+      "all_matching_categories": [
+        "global_media_domain",
+        "apple_domain"
+      ],
+      "domain": "podcasts.apple.com",
+      "winner": "global_media_domain"
+    },
+    {
+      "all_matching_categories": [
+        "global_media_domain"
+      ],
+      "domain": "open.spotify.com",
+      "winner": "global_media_domain"
+    },
+    {
+      "all_matching_categories": [
+        "global_media_domain"
+      ],
+      "domain": "www.twitch.tv",
+      "winner": "global_media_domain"
+    },
+    {
+      "all_matching_categories": [
+        "onedrive_domain",
+        "microsoft_domain"
+      ],
+      "domain": "onedrive.live.com",
+      "winner": "onedrive_domain"
+    },
+    {
+      "all_matching_categories": [
+        "github_domain",
+        "microsoft_domain"
+      ],
+      "domain": "github.com",
+      "winner": "github_domain"
+    },
+    {
+      "all_matching_categories": [
+        "paypal_domain"
+      ],
+      "domain": "www.paypal.com",
+      "winner": "paypal_domain"
+    },
+    {
+      "all_matching_categories": [
+        "usbank_domain"
+      ],
+      "domain": "www.bankofamerica.com",
+      "winner": "usbank_domain"
+    },
+    {
+      "all_matching_categories": [
+        "telegram_domain"
+      ],
+      "domain": "web.telegram.org",
+      "winner": "telegram_domain"
+    },
+    {
+      "all_matching_categories": [
+        "google_domain"
+      ],
+      "domain": "www.google.com",
+      "winner": "google_domain"
+    },
+    {
+      "all_matching_categories": [
+        "microsoft_domain"
+      ],
+      "domain": "www.microsoft.com",
+      "winner": "microsoft_domain"
+    },
+    {
+      "all_matching_categories": [
+        "apple_domain"
+      ],
+      "domain": "www.apple.com",
+      "winner": "apple_domain"
+    },
+    {
+      "all_matching_categories": [],
+      "domain": "store.steampowered.com",
+      "winner": null
+    },
+    {
+      "all_matching_categories": [],
+      "domain": "archiveofourown.org",
+      "winner": null
+    },
+    {
+      "all_matching_categories": [],
+      "domain": "disneylandparis.com",
+      "winner": null
+    }
+  ],
+  "schema_version": 1,
+  "scope": "domain categories only, not live client routing",
+  "subsets": [
+    {
+      "checked_entries": 9,
+      "child": "claude_domain",
+      "parent": "ai"
+    },
+    {
+      "checked_entries": 24,
+      "child": "netflix_domain",
+      "parent": "global_media_domain"
+    },
+    {
+      "checked_entries": 178,
+      "child": "youtube_domain",
+      "parent": "global_media_domain"
+    }
+  ]
+}

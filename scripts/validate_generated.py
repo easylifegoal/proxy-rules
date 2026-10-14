@@ -8,7 +8,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 
-from sync_rules import parse_entries, provider_format, surge_rules
+from sync_rules import audit_classification, parse_entries, provider_format, surge_rules
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -23,6 +23,12 @@ def main():
         actual = hashlib.sha256((ROOT / relative).read_bytes()).hexdigest()
         if actual != expected:
             raise ValueError(f"Published hash mismatch: {relative}")
+    domain_sets = {r["name"]: (ROOT / "Text" / (r.get("output", r["name"]) + ".list")).read_text().splitlines()
+                   for r in manifest["rules"] if r["behavior"] == "domain" and r.get("surge", True)}
+    audit = audit_classification(domain_sets, json.loads((ROOT / "custom/classification.json").read_text()))
+    if audit != json.loads((ROOT / "metadata/classification-audit.json").read_text()):
+        raise ValueError("Recorded classification audit is stale")
+    print(f"Validated category boundaries and {len(audit['samples'])} domain routing examples")
     # Independently compare Surge and classical YAML with the canonical Text sets.
     for rule in manifest["rules"]:
         output = rule.get("output", rule["name"])
