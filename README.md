@@ -6,8 +6,10 @@
 
 [工作流与运行记录](https://github.com/easylifegoal/proxy-rules/actions/workflows/sync-rules.yml)
 
-以现有规则清单为基准，共 19 组：MetaCubeX 17 组、Fake-IP 排除名单 1 组、手动维护的银行域名 1 组。
+结合 Clash 与 Surge 当前引用的规则，共 21 组：MetaCubeX 18 组、APNS 1 组、Fake-IP 排除名单 1 组、手动维护的银行域名 1 组。
 不上传节点、密码、UUID、私钥或完整代理配置，也不会自动修改任何客户端配置。
+
+[两端规则源对比与统一范围](docs/source-comparison.md) 说明旧名单的差异、统一版的取舍和迁移注意事项。**构建完成不代表客户端已切换订阅**；各自策略、Wi-Fi 场景、规则顺序和兜底继续由原配置控制。
 
 - **计划每天 09:17（北京时间 / 新加坡时间，UTC+8）更新**，也支持 Actions → Run workflow 手动运行。
 - GitHub 定时任务不保证准点；长时间无仓库活动时可能暂停，请以 Actions 的实际成功记录为准。
@@ -21,10 +23,12 @@
 
 | 规则 | 来源 |
 | --- | --- |
-| AI、GitHub、Telegram、Netflix、PayPal、OneDrive、微软、Apple、私有域名、国内域名、国外域名 | MetaCubeX `meta/geo/geosite` |
+| AI、GitHub、Telegram、Netflix、PayPal、OneDrive、微软、Google、Apple、私有域名、国内域名、国外域名 | MetaCubeX `meta/geo/geosite` |
 | `global_media_domain` | MetaCubeX `category-entertainment`，沿用现有名单；除流媒体还包含游戏、小说等，不是纯视频集合 |
 | 私有、中国、Telegram、Netflix IP | MetaCubeX `meta/geo/geoip` |
 | Apple IP | MetaCubeX `meta/geo-lite/geoip/apple.mrs`，保留原来的 lite 来源 |
+| `google_domain` | MetaCubeX `google.mrs`，**包含 YouTube**；不引入整份 Google/云平台 IP 集合，也不等同于旧 Surge Google 混合名单 |
+| `apns` | QuixoticHeart/rule-set `ruleset/loon/apns.list`，保留域名、关键词、IPv4/IPv6 和 no-resolve；仅输出 classical YAML / 文本 / Surge |
 | `fakeipfilter_domain` | wwqgtxx/clash-rules `release/fakeip-filter.mrs`，更上游为 ShellCrash |
 | `usbank_domain` | 本仓库 `custom/usbank.txt`，仅下面说明的六个银行域名 |
 
@@ -34,11 +38,11 @@
 
 | 路径 | 用途 |
 | --- | --- |
-| `Clash/<名称>.mrs` | Mihomo，`format: mrs`；`behavior` 对应 domain 或 ipcidr |
-| `Clash/<名称>.yaml` | 可读 YAML，通常为 domain/ipcidr；**银行 YAML 保持原有 classical 格式** |
-| `Text/<名称>.list` | Mihomo 的可读域名/IP 清单，不可直接当作 Surge RULE-SET |
+| `Clash/<名称>.mrs` | Mihomo，`format: mrs`；`behavior` 对应 domain 或 ipcidr；**APNS 不生成 MRS** |
+| `Clash/<名称>.yaml` | 可读 YAML，通常为 domain/ipcidr；**银行与 APNS 使用 classical 格式** |
+| `Text/<名称>.list` | 可读规范化数据；域名/IP 清单不能直接当作 Surge RULE-SET，APNS 为 classical 规则 |
 | `Surge/<名称>.list` | Surge RULE-SET，不包含策略名称；IP 规则带 no-resolve |
-| `Sources/*` | 未修改的上游 MRS 及其解码文本，用于审核与重新生成 |
+| `Sources/*` | 未修改的上游 MRS / classical 原文，以及规范化文本，用于审核与重新生成 |
 | `metadata/sync-state.json` | 最后一次发布使用的源版本、哈希及条数，不是最近一次检查时间 |
 
 例如 Netflix：
@@ -50,9 +54,13 @@
 完整的 **provider 配置片段**见 [MRS 示例](examples/rule-providers-mrs.yaml)、[YAML 示例](examples/rule-providers-yaml.yaml)。保留自己的规则顺序、策略名称、节点及 DNS 设置，不要将片段覆盖成完整配置。
 [Surge 示例](examples/surge-rules.conf) 中的 `POLICY` 必须替换；列表顺序只是清单顺序，不是建议的分流顺序。
 
+MRS 示例是 **MRS 优先**，其中 APNS 自动使用 `behavior: classical`、`format: yaml`。MRS 不支持关键词规则，不能把 APNS 的域名/IP 部分单独转成 MRS 就声称完整等价。APNS 的 YAML 与 Surge 文件包含同一套规则。
+
 `fakeipfilter_domain` 是 Mihomo 的 **DNS Fake-IP 排除名单**，不是路由策略，因此不生成 Surge 路由文件。它包含 Mihomo 的单层通配符，不能直接换成 Surge 的跨层通配符；其余规则若将来出现不能等价转换的模式，构建会停止，绝不静默扩大匹配范围。
 
-跨格式生成以当前 **MRS 实际包含的规则**为基准。上游 classical 文件中可能额外包含的正则、关键词等不会被擅自加入，避免迁移时改变现有范围。未做自定义修改的 MRS 会原样发布，不重新压缩替换。
+MetaCubeX 跨格式生成以当前 **MRS 实际包含的规则**为基准。其他旧 classical 名单中的正则、关键词、进程、User-Agent 和 ASN 规则不会自动合并；这不是旧 Surge 名单的逐条镜像，差异详见对比文档。未做自定义修改的 MRS 会原样发布，不重新压缩替换。
+
+APNS 是显式的 classical 例外。目前仅接受两端共有的 `DOMAIN`、`DOMAIN-SUFFIX`、`DOMAIN-KEYWORD`、`IP-CIDR`、`IP-CIDR6` 及 IP 的 `no-resolve`。遇到新增的未知类型、选项或夹带策略名会阻止发布，不能静默丢弃。
 
 ### 如何维护
 
@@ -77,6 +85,14 @@ python3 scripts/sync_rules.py
 python3 scripts/validate_generated.py
 python3 scripts/sync_rules.py --pinned --check
 ```
+
+macOS 已安装 Surge 时，可附加只读语法校验（不切换或重载正在使用的配置）：
+
+```sh
+python3 scripts/validate_generated.py --surge-cli /Applications/Surge.app/Contents/Applications/surge-cli
+```
+
+校验同时比较 Surge、YAML 与规范化文本的匹配条目；MRS 通过编译/解码往返验证。测试的是文件及转换，不代表已经验证所有业务流量或改变了客户端行为。
 
 `--pinned --check` 使用最后发布的上游 SHA 重新验证，不写文件；首次生成后才能运行。回退可对错误发布提交执行 `git revert`；如果错误仍存在于上游，应先在 Actions 暂停工作流，避免下一次同步再次引入。
 

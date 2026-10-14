@@ -1,4 +1,5 @@
 # Provider-only fragment. Keep your existing rules, policies and DNS settings.
+# Classical sets (APNS) use YAML even in the MRS-preferred example.
 rule-providers:
   "fakeipfilter_domain":
     type: http
@@ -77,6 +78,20 @@ rule-providers:
     interval: 86400
     path: ./ruleset/microsoft_domain.yaml
     url: https://raw.githubusercontent.com/easylifegoal/proxy-rules/main/Clash/microsoft_domain.yaml
+  "google_domain":
+    type: http
+    behavior: domain
+    format: yaml
+    interval: 86400
+    path: ./ruleset/google_domain.yaml
+    url: https://raw.githubusercontent.com/easylifegoal/proxy-rules/main/Clash/google_domain.yaml
+  "apns":
+    type: http
+    behavior: classical
+    format: yaml
+    interval: 86400
+    path: ./ruleset/apns.yaml
+    url: https://raw.githubusercontent.com/easylifegoal/proxy-rules/main/Clash/apns.yaml
   "apple_domain":
     type: http
     behavior: domain

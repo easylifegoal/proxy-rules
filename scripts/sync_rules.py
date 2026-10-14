@@ -76,8 +76,11 @@ def validate_manifest(manifest: dict) -> None:
             if not NAME.fullmatch(output) or output in outputs or output in (".", ".."):
                 raise ValueError(f"Duplicate/invalid output: {output}")
             outputs.add(output)
-        if rule["behavior"] not in ("domain", "ipcidr"):
+        if rule["behavior"] not in ("domain", "ipcidr", "classical"):
             raise ValueError(f"Unsupported behavior: {name}")
+        input_format = rule.get("input_format", "classical" if rule["behavior"] == "classical" else "mrs")
+        if input_format not in ("mrs", "classical") or ((input_format == "classical") != (rule["behavior"] == "classical")):
+            raise ValueError(f"Input format and behavior do not match: {name}")
         if ("local" in rule) == ("upstream" in rule):
             raise ValueError(f"Exactly one input required: {name}")
         if "local" in rule:
@@ -116,6 +119,10 @@ def source_url(rule: dict, snapshots: dict) -> str:
 
 
 def parse_entries(text: str, behavior: str) -> list[str]:
+    if behavior == "classical":
+        return parse_classical(text)
+    if behavior not in ("domain", "ipcidr"):
+        raise ValueError(f"Unsupported behavior: {behavior}")
     entries = set()
     for raw in text.splitlines():
         line = raw.strip()
@@ -140,6 +147,38 @@ def parse_entries(text: str, behavior: str) -> list[str]:
                 if "*" in label and label != "*":
                     raise ValueError(f"Invalid label wildcard: {line!r}")
         entries.add(line)
+    if not entries:
+        raise ValueError("Empty rule set")
+    return sorted(entries)
+
+
+def parse_classical(text: str) -> list[str]:
+    """A deliberately small shared subset; unknown types/options fail closed."""
+    entries = set()
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line or line.startswith(("#", "//")):
+            continue
+        parts = [part.strip() for part in line.split(",")]
+        if len(parts) < 2 or not parts[1]:
+            raise ValueError(f"Invalid classical rule: {line!r}")
+        kind, value, *options = parts
+        if kind in ("DOMAIN", "DOMAIN-SUFFIX", "DOMAIN-KEYWORD"):
+            if options or any(c.isspace() for c in value):
+                raise ValueError(f"Unexpected classical domain options: {line!r}")
+            value = parse_entries(value, "domain")[0]
+            if value.startswith((".", "+")) or "*" in value:
+                raise ValueError(f"Unsupported classical domain pattern: {line!r}")
+        elif kind in ("IP-CIDR", "IP-CIDR6"):
+            if options not in ([], ["no-resolve"]):
+                raise ValueError(f"Unexpected classical IP options: {line!r}")
+            value = parse_entries(value, "ipcidr")[0]
+            if ipaddress.ip_network(value).version != (4 if kind == "IP-CIDR" else 6):
+                raise ValueError(f"Classical IP family mismatch: {line!r}")
+        else:
+            # Do not silently drop USER-AGENT, ASN, logical rules, actions, etc.
+            raise ValueError(f"Unsupported classical rule type: {kind!r}")
+        entries.add(",".join([kind, value, *options]))
     if not entries:
         raise ValueError("Empty rule set")
     return sorted(entries)
@@ -186,6 +225,8 @@ def apply_overrides(entries: list[str], override: dict, behavior: str) -> list[s
 
 
 def surge_rules(entries: list[str], behavior: str) -> list[str]:
+    if behavior == "classical":
+        return parse_classical("\n".join(entries))
     result = set()
     for entry in entries:
         if behavior == "ipcidr":
@@ -210,18 +251,26 @@ def yaml_payload(entries: list[str], header: str) -> bytes:
     return (header + "payload:\n" + "".join("  - " + json.dumps(e, ensure_ascii=False) + "\n" for e in entries)).encode()
 
 
+def provider_format(rule: dict, preferred: str) -> tuple[str, str]:
+    # MRS cannot encode keywords. Never publish a partial APNS .mrs file.
+    fmt = "yaml" if rule["behavior"] == "classical" else preferred
+    behavior = "classical" if fmt == "yaml" and rule.get("classical_yaml") else rule["behavior"]
+    return behavior, fmt
+
+
 def render_examples(manifest: dict) -> dict[str, bytes]:
     base = f"https://raw.githubusercontent.com/{manifest['publish_repository']}/main"
     result = {}
     for fmt in ("mrs", "yaml"):
-        lines = ["# Provider-only fragment. Keep your existing rules, policies and DNS settings.", "rule-providers:"]
+        lines = ["# Provider-only fragment. Keep your existing rules, policies and DNS settings.",
+                 "# Classical sets (APNS) use YAML even in the MRS-preferred example.", "rule-providers:"]
         for rule in manifest["rules"]:
             out = rule.get("output", rule["name"])
-            behavior = "classical" if fmt == "yaml" and rule.get("classical_yaml") else rule["behavior"]
+            behavior, actual_format = provider_format(rule, fmt)
             lines.extend([
                 f"  {json.dumps(rule['name'])}:", "    type: http", f"    behavior: {behavior}",
-                f"    format: {fmt}", "    interval: 86400",
-                f"    path: ./ruleset/{out}.{fmt}", f"    url: {base}/Clash/{out}.{fmt}",
+                f"    format: {actual_format}", "    interval: 86400",
+                f"    path: ./ruleset/{out}.{actual_format}", f"    url: {base}/Clash/{out}.{actual_format}",
             ])
         result[f"examples/rule-providers-{fmt}.yaml"] = ("\n".join(lines) + "\n").encode()
     lines = ["# Reference only: replace POLICY with your actual policy; order is NOT prescribed.",
@@ -241,12 +290,16 @@ def build_rule(rule: dict, data: bytes | None, snapshots: dict, overrides: dict,
     with tempfile.TemporaryDirectory(prefix="proxy-rule-") as directory:
         work = Path(directory)
         if data is not None:
-            incoming, decoded = work / "upstream.mrs", work / "upstream.txt"
-            incoming.write_bytes(data)
-            convert(mihomo, behavior, "mrs", incoming, decoded)
-            entries = parse_entries(decoded.read_text(), behavior)
+            if behavior == "classical":
+                entries = parse_classical(data.decode("utf-8-sig"))
+                artifacts[f"Sources/{name}.list"] = data
+            else:
+                incoming, decoded = work / "upstream.mrs", work / "upstream.txt"
+                incoming.write_bytes(data)
+                convert(mihomo, behavior, "mrs", incoming, decoded)
+                entries = parse_entries(decoded.read_text(), behavior)
+                artifacts[f"Sources/{name}.mrs"] = data
             origin = source_url(rule, snapshots)
-            artifacts[f"Sources/{name}.mrs"] = data
         else:
             source = root / rule["local"]
             entries = parse_entries(source.read_text(), behavior)
@@ -255,6 +308,24 @@ def build_rule(rule: dict, data: bytes | None, snapshots: dict, overrides: dict,
         upstream_entries = entries
         artifacts[f"Sources/{name}.txt"] = ("\n".join(entries) + "\n").encode()
         entries = apply_overrides(entries, overrides.get(name, {}), behavior)
+        if behavior == "classical":
+            check_count(name + " output", len(entries), rule["minimum_entries"], old.get("output_entries"), allow_large_change)
+            heading = f"# Generated {name}; edit sources.json/custom, not this file.\n# Provenance and license: ../metadata/sync-state.json, ../NOTICE.md\n"
+            plain = ("\n".join(entries) + "\n").encode()
+            for output in [rule.get("output", name)] + rule.get("aliases", []):
+                artifacts[f"Clash/{output}.yaml"] = yaml_payload(entries, heading)
+                artifacts[f"Text/{output}.list"] = plain
+                if rule.get("surge", True):
+                    artifacts[f"Surge/{output}.list"] = heading.encode() + plain
+            record = {
+                "source": origin, "behavior": behavior,
+                "upstream_entries": len(upstream_entries), "output_entries": len(entries),
+                "upstream_sha256": digest(data) if data is not None else digest((root / rule['local']).read_bytes()),
+                "mrs_sha256": None, "upstream_mrs_preserved": False,
+                "surge_exported": rule.get("surge", True),
+            }
+            print(f"{name}: {len(upstream_entries)} source -> {len(entries)} classical entries; YAML/Surge only", flush=True)
+            return artifacts, record
         initial = work / "canonical.txt"
         initial.write_text("\n".join(entries) + "\n")
         compiled, decoded = work / "final.mrs", work / "final.txt"

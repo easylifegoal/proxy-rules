@@ -3,7 +3,8 @@
   "publish_repository": "easylifegoal/proxy-rules",
   "upstreams": {
     "metacubex": {"repository": "MetaCubeX/meta-rules-dat", "branch": "meta"},
-    "fakeip": {"repository": "wwqgtxx/clash-rules", "branch": "release"}
+    "fakeip": {"repository": "wwqgtxx/clash-rules", "branch": "release"},
+    "apns": {"repository": "QuixoticHeart/rule-set", "branch": "ruleset"}
   },
   "rules": [
     {"name": "fakeipfilter_domain", "behavior": "domain", "upstream": "fakeip", "path": "fakeip-filter.mrs", "minimum_entries": 60, "surge": false},
@@ -17,6 +18,8 @@
     {"name": "usbank_domain", "output": "usbank", "behavior": "domain", "local": "custom/usbank.txt", "minimum_entries": 6, "classical_yaml": true, "aliases": ["BankOfAmerica"]},
     {"name": "onedrive_domain", "behavior": "domain", "upstream": "metacubex", "path": "geo/geosite/onedrive.mrs", "minimum_entries": 8},
     {"name": "microsoft_domain", "behavior": "domain", "upstream": "metacubex", "path": "geo/geosite/microsoft.mrs", "minimum_entries": 300},
+    {"name": "google_domain", "behavior": "domain", "upstream": "metacubex", "path": "geo/geosite/google.mrs", "minimum_entries": 500},
+    {"name": "apns", "behavior": "classical", "input_format": "classical", "upstream": "apns", "path": "loon/apns.list", "minimum_entries": 10},
     {"name": "apple_domain", "behavior": "domain", "upstream": "metacubex", "path": "geo/geosite/apple.mrs", "minimum_entries": 700},
     {"name": "geolocation-!cn", "behavior": "domain", "upstream": "metacubex", "path": "geo/geosite/geolocation-!cn.mrs", "minimum_entries": 10000},
     {"name": "cn_domain", "behavior": "domain", "upstream": "metacubex", "path": "geo/geosite/cn.mrs", "minimum_entries": 50000},

@@ -12,7 +12,58 @@ class ValidationTests(unittest.TestCase):
     def test_current_manifest(self):
         manifest = json.loads((sync.ROOT / 'sources.json').read_text())
         sync.validate_manifest(manifest)
-        self.assertEqual(len(manifest['rules']), 19)
+        self.assertEqual(len(manifest['rules']), 21)
+
+    def test_reject_format_behavior_mismatch(self):
+        manifest = json.loads((sync.ROOT / 'sources.json').read_text())
+        manifest['rules'][0]['input_format'] = 'classical'
+        with self.assertRaisesRegex(ValueError, 'do not match'):
+            sync.validate_manifest(manifest)
+
+    def test_classical_shared_subset(self):
+        source = '# comment\nDOMAIN,Identity.Apple.COM\nDOMAIN-SUFFIX,push.apple.com\nDOMAIN-KEYWORD,apple.com.edgekey.net\nIP-CIDR,17.57.144.0/22,no-resolve\nIP-CIDR6,2001:0db8::/32,no-resolve\n'
+        expected = ['DOMAIN,identity.apple.com', 'DOMAIN-KEYWORD,apple.com.edgekey.net',
+                    'DOMAIN-SUFFIX,push.apple.com', 'IP-CIDR,17.57.144.0/22,no-resolve',
+                    'IP-CIDR6,2001:db8::/32,no-resolve']
+        self.assertEqual(sync.parse_entries(source, 'classical'), expected)
+        self.assertEqual(sync.surge_rules(expected, 'classical'), expected)
+
+    def test_classical_rejects_unknown_and_malformed_rules(self):
+        for source in ('', '<html>error</html>', 'USER-AGENT,Test*', 'IP-ASN,20473,no-resolve',
+                       'DOMAIN,example.com,DIRECT', 'DOMAIN-SUFFIX,*.example.com',
+                       'DOMAIN-KEYWORD,', 'IP-CIDR,2001:db8::/32', 'IP-CIDR6,192.0.2.0/24',
+                       'IP-CIDR,192.0.2.0/24,REJECT', 'DOMAIN,with space.com',
+                       'DOMAIN-WILDCARD,*.example.com', 'DOMAIN-KEYWORD,a*b',
+                       'IP-CIDR,192.0.2.0/24,no-resolve,DIRECT'):
+            with self.subTest(source=source), self.assertRaises(ValueError):
+                sync.parse_classical(source)
+
+    def test_classical_overrides_preserve_keyword_and_no_resolve(self):
+        entries = ['DOMAIN-KEYWORD,apple.com.edgekey.net']
+        result = sync.apply_overrides(entries, {'add': ['IP-CIDR,192.0.2.0/24,no-resolve']}, 'classical')
+        self.assertEqual(result, entries + ['IP-CIDR,192.0.2.0/24,no-resolve'])
+
+    def test_mrs_example_falls_back_to_complete_classical_yaml(self):
+        manifest = {'publish_repository': 'test/repo', 'rules': [
+            {'name': 'apns', 'behavior': 'classical'}, {'name': 'google', 'behavior': 'domain'}]}
+        example = sync.render_examples(manifest)['examples/rule-providers-mrs.yaml'].decode()
+        self.assertIn('behavior: classical\n    format: yaml', example)
+        self.assertIn('/Clash/apns.yaml', example)
+        self.assertNotIn('apns.mrs', example)
+        self.assertIn('/Clash/google.mrs', example)
+
+    def test_classical_build_preserves_raw_input_without_mrs(self):
+        rule = {'name': 'apns', 'behavior': 'classical', 'input_format': 'classical',
+                'upstream': 'test', 'path': 'apns.list', 'minimum_entries': 1}
+        data = b'# original comment\nDOMAIN-KEYWORD,apple.com.edgekey.net\n'
+        snapshots = {'test': {'repository': 'test/repo', 'sha': 'a' * 40}}
+        with patch.object(sync, 'convert', side_effect=AssertionError('Classical must not use MRS')):
+            artifacts, record = sync.build_rule(rule, data, snapshots, {}, {}, Path('/unused'), sync.ROOT, False)
+        self.assertEqual(artifacts['Sources/apns.list'], data)
+        self.assertNotIn('Clash/apns.mrs', artifacts)
+        self.assertIsNone(record['mrs_sha256'])
+        self.assertIn(b'DOMAIN-KEYWORD,apple.com.edgekey.net', artifacts['Clash/apns.yaml'])
+        self.assertIn(b'DOMAIN-KEYWORD,apple.com.edgekey.net', artifacts['Surge/apns.list'])
 
     def test_reject_duplicate_output(self):
         manifest = json.loads((sync.ROOT / 'sources.json').read_text())
