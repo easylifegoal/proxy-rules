@@ -30,12 +30,13 @@ class ClientProfileTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "One common"):
                 validate_routing(self.manifest, routing, self.contract)
 
-    def test_all_rules_are_equivalent_in_order_policy_and_options(self):
+    def test_business_rules_are_equivalent_after_reviewed_exceptions(self):
         for templates in (False, True):
             clash, surge = self.build(templates)
-            self.assertEqual(clash["rules"], [normalize_surge_rule(r, self.manifest) for r in surge if not r.startswith("SUBNET,")])
+            self.assertEqual([r for r in clash["rules"] if r != QUIC_RULE],
+                             [normalize_surge_rule(r, self.manifest) for r in surge if not r.startswith("SUBNET,")])
             self.assertEqual(len(clash["rules"]), 37 if templates else 36)
-            self.assertEqual(len(surge), 39 if templates else 36)
+            self.assertEqual(len(surge), 38 if templates else 35)
             self.assertEqual(required_policies(clash["rules"]), required_policies(surge))
 
     def test_private_settings_and_dns_rule_not_routed(self):
@@ -93,17 +94,48 @@ class ClientProfileTests(unittest.TestCase):
             "DOMAIN,ifconfig.me,Proxy", "RULE-SET,claude_domain,Claude",
             "DOMAIN-KEYWORD,n26,N26", "DOMAIN-SUFFIX,nodeseek.com,Nodeseek",
             "DOMAIN-KEYWORD,223789,Magpie-Proxy", "DOMAIN-KEYWORD,023168,Magpie"])
-        self.assertEqual(clash["rules"], [normalize_surge_rule(r, self.manifest) for r in surge if not r.startswith("SUBNET,")])
+        self.assertEqual([r for r in clash["rules"] if r != QUIC_RULE],
+                         [normalize_surge_rule(r, self.manifest) for r in surge if not r.startswith("SUBNET,")])
 
-    def test_quic_uses_identical_cn_providers_not_separate_geodatabases(self):
+    def test_quic_guard_remains_clash_only_and_uses_shared_cn_providers(self):
         clash, surge = self.build()
         self.assertEqual(clash["rules"][0], QUIC_RULE)
-        self.assertTrue(surge[0].startswith("AND,((PROTOCOL,UDP),(DEST-PORT,443),"))
+        self.assertEqual(clash["rules"].count(QUIC_RULE), 1)
+        self.assertFalse(any("PROTOCOL,UDP" in r or "NETWORK,UDP" in r for r in surge))
+        self.assertFalse(any("block-quic" in r for r in surge))
         for name in ("cn_domain", "cn_ip"):
             self.assertIn(f"(RULE-SET,{name})", QUIC_RULE)
-            self.assertIn(f"/Surge/{name}.list", surge[0])
         self.assertNotIn("GEOSITE", QUIC_RULE)
         self.assertNotIn("GEOIP", QUIC_RULE)
+
+    def test_quic_client_scope_cannot_be_removed_or_expanded(self):
+        for clients in (None, [], ["surge"], ["clash", "surge"], "clash"):
+            routing = copy.deepcopy(self.routing)
+            entry = routing["common"]["insertions"][0]["rules"][1]
+            if clients is None:
+                entry.pop("clients")
+            else:
+                entry["clients"] = clients
+            with self.subTest(clients=clients), self.assertRaisesRegex(ValueError, "Clash-only"):
+                validate_routing(self.manifest, routing, self.contract)
+
+    def test_clash_quic_guard_cannot_be_removed_or_shared_under_another_id(self):
+        for change in ("remove", "duplicate"):
+            routing = copy.deepcopy(self.routing)
+            entries = routing["common"]["insertions"][0]["rules"]
+            if change == "remove":
+                entries.pop(1)
+            else:
+                entries.append({"id": "another-quic", "rule": QUIC_RULE})
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                validate_routing(self.manifest, routing, self.contract)
+
+    def test_other_business_rules_cannot_be_made_client_specific(self):
+        for clients in ([], ["clash"], ["surge"], ["clash", "surge"]):
+            routing = copy.deepcopy(self.routing)
+            routing["common"]["insertions"][0]["rules"][2]["clients"] = clients
+            with self.subTest(clients=clients), self.assertRaisesRegex(ValueError, "client-specific"):
+                validate_routing(self.manifest, routing, self.contract)
 
     def test_no_resolve_semantics_are_equal(self):
         clash, surge = self.build()

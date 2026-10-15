@@ -66,8 +66,8 @@ def main():
             provider.pop("interval")
         profile = Path(directory) / "clash-public-profile.json"
         profile.write_text(json.dumps(clash))
-        # Unified QUIC rule uses the same CN providers on both clients, not
-        # independently updated GEOSITE/GEOIP databases.
+        # Clash-only UDP/443 guard uses the shared CN providers. Surge keeps
+        # native QUIC handling, without a generated UDP/443 rejection rule.
         core_home = ROOT / ".tools/profile-check"
         core_home.mkdir(exist_ok=True)
         result = subprocess.run([str(binary), "-t", "-d", str(core_home), "-f", str(profile)],
@@ -93,7 +93,7 @@ def main():
                                     capture_output=True, text=True, timeout=60)
             if result.returncode:
                 raise ValueError(f"Public Surge profile validation failed:\n{result.stdout}\n{result.stderr}")
-            print(f"Public Surge template: {len(surge)} rules checked, matching Clash semantics")
+            print(f"Public Surge template: {len(surge)} rules checked; business parity, native QUIC handling")
         for fmt in ("mrs", "yaml"):
             providers, rules = {}, []
             for rule in manifest["rules"]:

@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 import unittest
 
-from scripts.client_profiles import TEST_TEMPLATE_VALUES, build_profiles, required_policies
+from scripts.client_profiles import QUIC_RULE, TEST_TEMPLATE_VALUES, build_profiles, required_policies, translate_rule
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 class LocalProfileAuditTests(unittest.TestCase):
     def setUp(self):
         manifest = json.loads((ROOT / 'sources.json').read_text())
+        self.manifest = manifest
         routing = json.loads((ROOT / 'custom/client-routing.json').read_text())
         contract = json.loads((ROOT / 'custom/classification.json').read_text())
         values = {**TEST_TEMPLATE_VALUES, 'TAILSCALE_DIRECT_IPV4': '100.64.0.1'}
@@ -44,8 +45,22 @@ class LocalProfileAuditTests(unittest.TestCase):
         result = self.run_audit()
         self.assertEqual(result.returncode, 0, result.stderr)
         report = json.loads(result.stdout)
-        self.assertEqual((report['clash_enabled_rules'], report['surge_enabled_rules']), (37, 39))
+        self.assertEqual((report['clash_enabled_rules'], report['surge_enabled_rules']), (37, 38))
         self.assertTrue(report['complete_ordered_match'])
+        self.assertTrue(report['clash_only_quic_guard'])
+        self.assertFalse(report['surge_rule_level_quic_reject'])
+
+    def test_reintroduced_surge_quic_guard_is_detected(self):
+        self.surge.insert(1, translate_rule(QUIC_RULE, self.manifest, 'surge'))
+        result = self.run_audit()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('Surge: rule order/content differs', result.stderr)
+
+    def test_missing_clash_quic_guard_is_detected(self):
+        self.clash['rules'].remove(QUIC_RULE)
+        result = self.run_audit()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('Clash: rule order/content differs', result.stderr)
 
     def test_missing_clash_nodeseek_is_detected(self):
         self.clash['rules'].remove('DOMAIN-SUFFIX,nodeseek.com,Nodeseek')

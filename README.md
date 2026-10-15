@@ -53,12 +53,12 @@
 
 ### 两端规则配置
 
-- [Clash 规则配置](Profiles/Clash.rules.yaml)：23 个 provider、37 条完整路由（36 条已展开规则 + 1 条私人地址占位规则）。Fake-IP 只供现有 DNS 配置引用。Claude / APNS 使用 YAML，其余使用 MRS。
-- [Surge 规则配置](Profiles/Surge.rules.conf)：同样的 37 条公共路由，加 2 条 Wi-Fi 直连例外，共 39 条（36 条已展开规则 + 1 条私人地址占位 + 2 条 Wi-Fi 占位）。
+- [Clash 规则配置](Profiles/Clash.rules.yaml)：23 个 provider、36 条公共路由，加 1 条 Clash 专用 UDP/443 拦截，共 37 条（36 条已展开规则 + 1 条私人地址占位规则）。Fake-IP 只供现有 DNS 配置引用。Claude / APNS 使用 YAML，其余使用 MRS。
+- [Surge 规则配置](Profiles/Surge.rules.conf)：同样的 36 条公共路由，加 2 条 Wi-Fi 直连例外，共 38 条（35 条已展开规则 + 1 条私人地址占位 + 2 条 Wi-Fi 占位）；不输出 UDP/443 拦截规则。
 
-两份都**不是独立可连接的完整配置**，不含节点连接信息、策略组定义、真实私人 IP / SSID、DNS 设置或控制器凭据。公共路由只维护一份：`custom/client-routing.json` 的 `common.routes`、`common.insertions`、`common.fallback` 定义规则、顺序和兜底，`policy_groups` 声明可引用的组名；生成器仅转换语法与规则集 URL，不维护两份不同策略表。`surge_wifi` 是用户明确保留的唯一客户端例外。未启用的两条广告规则按用户要求不收录。
+两份都**不是独立可连接的完整配置**，不含节点连接信息、策略组定义、真实私人 IP / SSID、DNS 设置或控制器凭据。公共路由只维护一份：`custom/client-routing.json` schema 6 的 `common.routes`、`common.insertions`、`common.fallback` 定义规则、顺序和兜底，`policy_groups` 声明可引用的组名；不维护两份不同业务策略表。客户端差异明确限定为：`surge_wifi` 的两条 Wi-Fi 直连，以及 `non-cn-quic` 上的 `"clients": ["clash"]`（Surge 使用原生 QUIC 处理）。构建校验拒绝把其他业务规则设为单端专用。未启用的两条广告规则按用户要求不收录。
 
-NodeSeek、N26、农行检测、IP 查询、Safeway、Magpie、非中国 QUIC 拒绝等均在两端保留。规则只指向同名策略组或 `DIRECT` / `REJECT`，不直接引用节点：NodeSeek → `Nodeseek`，N26 → `N26`，PayPal 统一大小写为 `PayPal`。Surge 本地配置补齐缺少的组；两端均由独立的 `APNS` 组处理推送，其他 Apple 流量走 `Apple`，两组不能合并。
+NodeSeek、N26、农行检测、IP 查询、Safeway、Magpie 等业务规则均在两端保留。规则只指向同名策略组或 `DIRECT` / `REJECT`，不直接引用节点：NodeSeek → `Nodeseek`，N26 → `N26`，PayPal 统一大小写为 `PayPal`。Surge 本地配置补齐缺少的组；两端均由独立的 `APNS` 组处理推送，其他 Apple 流量走 `Apple`，两组不能合并。
 
 私人规则不会被丢弃或替换成一个随意的真实值，而是作为注释留在准确位置：
 
@@ -81,15 +81,17 @@ NodeSeek、N26、农行检测、IP 查询、Safeway、Magpie、非中国 QUIC �
 
 Claude 在 AI 之前；Netflix / YouTube 在 GlobalMedia 之前；媒体在 Google / Apple 之前；OneDrive / GitHub 在微软之前；APNS 在 Apple 前。这些顺序和两端公共规则逐条归一化后的相等性均有自动测试。Surge 不再追加独有的 `LAN` 规则或 `FINAL,Proxy,dns-failed`，改为与 Clash 相同的端口兜底及最终直连。
 
-中国 IP 规则在两端都允许触发解析：`sources.json` 为 `cn_ip` 设置 `surge_no_resolve: false`，发布的 Surge 条目不再附带 `no-resolve`；其余服务 / private IP 保持 `no-resolve`。两端 CN IP 订阅使用 `?v=resolve-v1` 避免旧缓存。QUIC 判断也统一引用仓库的 `cn_domain` + `cn_ip`，不再一端用独立 GEOSITE / GEOIP 数据库；仅按客户端语法转换 `NETWORK` ↔ `PROTOCOL`、`DST-PORT` ↔ `DEST-PORT`。
+中国 IP 规则在两端都允许触发解析：`sources.json` 为 `cn_ip` 设置 `surge_no_resolve: false`，发布的 Surge 条目不再附带 `no-resolve`；其余服务 / private IP 保持 `no-resolve`。两端 CN IP 订阅使用 `?v=resolve-v1` 避免旧缓存。
 
-统一的是分流配置层的条件、顺序、组名和选项，不是更换代理协议或强制同步运行状态。两端仍使用各自已有节点库；策略组中用户保存的选中项不会跨客户端自动同步，欲使用同一出口需要分别选择对应节点。DNS 配置、内核错误处理、协议能力仍可能不同，不能据此宣称所有运行行为完全相同。
+QUIC 是有意保留的实现差异：Clash 的原有 UDP/443 拦截位置和条件不变，使用 `cn_domain` + `cn_ip` 共同豁免国内流量；它按端口判断，不精准识别 QUIC，也不会随后面策略组切换到 DIRECT 而自动取消。Surge 不生成这条拦截，保留本地原有 `block-quic` 设置；默认行为随版本而变，见 [Surge 原生 QUIC 参数](https://manual.nssurge.com/policies/parameters.html)。模板只包含规则，不输出或强制覆盖 `[General]` / 节点参数；使用者需自行检查本地是否设置了 `block-quic = all` 等覆盖值。这不代表两端 QUIC 行为完全相同。
+
+统一的是公共业务分流的条件、顺序、组名和选项，Wi-Fi 与 QUIC 差异按上述约定保留，不是更换代理协议或强制同步运行状态。两端仍使用各自已有节点库；策略组中用户保存的选中项不会跨客户端自动同步，欲使用同一出口需要分别选择对应节点。DNS 配置、内核错误处理、协议能力仍可能不同，不能据此宣称所有运行行为完全相同。
 
 Claude 已统一为一个完整规则集：上游域名名单，加上 `claude-api.com` / `claudecontentmoderation.com` 域名后缀和 `claude` / `anthropic` 关键词。补充项仅在 `custom/overrides.json` 的 `claude_domain.add` 中维护，每次更新重新合并；不再在主配置重复写四条。两端集合内部不带策略名称，由主配置的 RULE-SET 指向 Claude 策略。关键词会匹配含该词的第三方域名，这是主动选择的更宽路由范围，不是官方归属认证，也不能识别名称不含这些词的所有相关服务。
 
 Clash 的 `claude_domain` 必须使用 `behavior: classical`、`format: yaml`；旧 `Clash/claude_domain.mrs` 已停止生成并移除，历史版本可从 Git 恢复。Surge 继续使用 `Surge/claude_domain.list`。两端订阅增加 `?v=classical-v1`，Clash 的缓存路径改为 `.yaml`，避免迁移时继续读取旧的仅域名缓存；URL 仍跟随 main 更新，不锁死到某个提交。必须一起切换 provider 的格式、URL、缓存路径，再移除主配置里的重复四条；不能拿 classical YAML 配 domain behavior。
 
-Surge 的家庭 Wi-Fi 占位规则紧跟 `claude_domain`，公司 Wi-Fi 占位规则紧跟 `usbank_domain`（在 Claude / AI / PayPal 之后）；这些是唯一允许插入公共规则序列的客户端例外。Claude 仍优先于两条 Wi-Fi 直连。因为公共顺序以 Clash 为基准，原 Surge 的局部优先级会改变：QUIC、农行检测与 IP 查询现在位于家庭 Wi-Fi 之前，银行 / APNS 不再在公共列表最顶端。具体 SSID 不进入本仓库。
+Surge 的家庭 Wi-Fi 占位规则紧跟 `claude_domain`，公司 Wi-Fi 占位规则紧跟 `usbank_domain`（在 Claude / AI / PayPal 之后）；这是两条已审核的 Wi-Fi 例外，Claude 仍优先于它们。公共顺序以 Clash 为基准：农行检测与 IP 查询位于家庭 Wi-Fi 之前，银行 / APNS 不在公共列表最顶端。Surge 不再在 Wi-Fi 规则前额外拒绝非国内 UDP/443；命中直连后是否允许 QUIC 由其原生设置决定。具体 SSID 不进入本仓库。
 
 Clash provider 缓存使用 `./providers/proxy-rules/`。原生校验会在临时配置中填入文档用 IP / Wi-Fi 名称，并给所有策略引用配上仅指向 DIRECT 的占位组；私人占位规则与 QUIC 嵌套规则也会被检查，不连接真实代理或重载用户配置。Linux CI 校验 Mihomo，Surge 校验需在安装 Surge 的 macOS 本地执行。逻辑规则格式参考 [Surge 官方文档](https://manual.nssurge.com/rules/logical.html) 和 [Mihomo 官方文档](https://wiki.metacubex.one/config/rules/)。
 

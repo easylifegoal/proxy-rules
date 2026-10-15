@@ -69,9 +69,9 @@
 
 IP 与域名文件分开发布。只有已明确维护的 Netflix、Telegram、Apple lite 等服务 IP 集合继续存在；不为媒体聚合自动加入整个云厂商 IP 或 ASN。APNS 是保留原混合规则的例外。
 
-`Profiles/` 由 `custom/client-routing.json` schema 5 的一份 `common` 定义生成，以 Clash 为公共基准；`surge_wifi` 只允许两处已审核的 Wi-Fi 例外。NodeSeek、N26、IP 查询、农行检测、Safeway、Magpie、QUIC 及端口兜底均统一，规则仅能引用声明过的策略组或内置动作，不直接指定节点。Tailscale 主机规则在两端都有，占位填值后启用。未启用广告规则不保留；完整模板不包含节点、DNS、重写或 MITM 配置。
+`Profiles/` 由 `custom/client-routing.json` schema 6 的一份 `common` 定义生成，以 Clash 为公共基准；`surge_wifi` 只允许两处已审核的 Wi-Fi 例外，`non-cn-quic` 的 `clients: ["clash"]` 明确标注唯一单端拦截规则。NodeSeek、N26、IP 查询、农行检测、Safeway、Magpie 及端口兜底均统一，规则仅能引用声明过的策略组或内置动作，不直接指定节点。Tailscale 主机规则在两端都有，占位填值后启用。未启用广告规则不保留；完整模板不包含节点、DNS、重写或 MITM 配置。
 
-回归测试检查两端规则在语法 / URL 归一化、排除明确声明的两条 Wi-Fi 例外后逐条相等。CN IP 的解析选项也统一，Surge 的 `cn_ip` 不再带 `no-resolve`；QUIC 同时使用共享 CN 域名和 IP provider，避免独立地理数据库导致差异。`scripts/audit_local_profiles.rb` 可只读比对私有配置全部路由、顺序、provider 及策略组引用，输出不含私人值。相同组名不代表组内当前选择自动同步；节点库、协议和运行时状态仍由各客户端管理。
+回归测试检查两端规则在语法 / URL 归一化、排除两条 Surge Wi-Fi 规则和一条 Clash UDP/443 拦截后，公共规则逐条相等；另行验证拦截不能从 Clash 丢失或重新加入 Surge。CN IP 的解析选项也统一，Surge 的 `cn_ip` 不再带 `no-resolve`。Clash 拦截使用共享 CN 域名和 IP provider；Surge 则保留本地原生 QUIC 控制，不保证两者拦截范围一致。`scripts/audit_local_profiles.rb` 可只读比对私有配置全部路由、顺序、provider 及策略组引用，输出不含私人值。相同组名不代表组内当前选择自动同步；节点库、协议和运行时状态仍由各客户端管理。
 
 [custom/classification.json](../custom/classification.json) 的 `domain_priority` 是用来测试业务域名的参考顺序；不含 Wi-Fi、IP、APNS classical、CN、私有网络或最终兜底。报告中的 `winner: null` 只表示没有命中这些受测业务分类，**不是 DIRECT，也不是实际请求无法匹配任何规则**。
 

@@ -1,5 +1,5 @@
 {
-  "schema_version": 5,
+  "schema_version": 6,
   "policy_groups": [
     "Proxy",
     "AI",
@@ -32,6 +32,7 @@
           },
           {
             "id": "non-cn-quic",
+            "clients": ["clash"],
             "rule": "AND,((NETWORK,UDP),(DST-PORT,443),(NOT,((OR,((RULE-SET,cn_domain),(RULE-SET,cn_ip)))))),REJECT"
           },
           {

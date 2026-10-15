@@ -75,4 +75,5 @@ puts JSON.generate({clash_enabled_rules: clash_rules.size, clash_private_placeho
                     surge_enabled_rules: surge.size, surge_private_placeholders: 3,
                     complete_ordered_match: true, provider_definitions_match: true,
                     all_rules_target_groups_or_builtins: true, same_rule_policy_names: true,
-                    surge_only_wifi_exceptions: 2, private_profiles_modified: false})
+                    surge_only_wifi_exceptions: 2, clash_only_quic_guard: true,
+                    surge_rule_level_quic_reject: false, private_profiles_modified: false})

@@ -1,6 +1,7 @@
 # Generated from one common source: sources.json + custom/client-routing.json.
 # UNIFIED ROUTING TEMPLATE, not a standalone connection profile.
-# Same common rules/order/groups/fallbacks; only Surge has two Wi-Fi DIRECT exceptions.
+# Same business rules/order/groups/fallbacks, with reviewed client differences:
+# Clash keeps its non-CN UDP/443 guard; Surge uses native QUIC handling and two Wi-Fi DIRECT rules.
 # Fill commented private IP / Wi-Fi placeholders locally, then uncomment those rules.
 # No node endpoints/credentials/real SSIDs; disabled ad rules are omitted.
 rules:

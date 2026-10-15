@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""One routing source, rendered into equivalent Clash and Surge rule templates."""
+"""Shared business routing with reviewed Wi-Fi and QUIC client differences."""
 import json
 import re
 
@@ -28,7 +28,7 @@ def rule_policy(rule):
 
 
 def validate_routing(manifest, routing, contract):
-    if set(routing) != {"schema_version", "policy_groups", "common", "surge_wifi"} or routing["schema_version"] != 5:
+    if set(routing) != {"schema_version", "policy_groups", "common", "surge_wifi"} or routing["schema_version"] != 6:
         raise ValueError("One common routing source is required")
     if routing["surge_wifi"] != SURGE_WIFI:
         raise ValueError("Only the two reviewed Surge Wi-Fi exceptions are allowed")
@@ -77,7 +77,7 @@ def validate_routing(manifest, routing, contract):
         if not isinstance(insertion["rules"], list) or not insertion["rules"]:
             raise ValueError("Empty inline insertion")
         for entry in insertion["rules"]:
-            states = set(entry) - {"id"}
+            states = set(entry) - {"id", "clients"}
             if len(states) != 1 or not states <= {"rule", "template"}:
                 raise ValueError("Inline rule must have exactly one state")
             name = entry.get("id", "")
@@ -86,6 +86,11 @@ def validate_routing(manifest, routing, contract):
             ids.add(name)
             state = next(iter(states))
             value = entry[state]
+            if name == "non-cn-quic":
+                if state != "rule" or value != QUIC_RULE or entry.get("clients") != ["clash"]:
+                    raise ValueError("The reviewed QUIC rule must be Clash-only")
+            elif "clients" in entry or value == QUIC_RULE:
+                raise ValueError("Only the reviewed QUIC rule may be client-specific")
             if not isinstance(value, str) or any(c in value for c in "\n\r\0"):
                 raise ValueError("Invalid inline rule text")
             if rule_policy(value) not in allowed:
@@ -101,6 +106,8 @@ def validate_routing(manifest, routing, contract):
                 raise ValueError("Unreviewed inline rule syntax")
     if templates != PRIVATE_TEMPLATES:
         raise ValueError("Private template rules must not be silently omitted")
+    if "non-cn-quic" not in ids:
+        raise ValueError("Clash QUIC guard must not be silently omitted")
     cn_ip = next(r for r in manifest["rules"] if r["name"] == "cn_ip")
     if cn_ip.get("surge_no_resolve", True):
         raise ValueError("CN IP DNS semantics must be identical in both clients")
@@ -136,7 +143,8 @@ def profile_entries(manifest, routing, client):
     insertions = {i["before"]: i["rules"] for i in settings["insertions"]}
     result = []
     for name, policy in settings["routes"]:
-        result.extend(dict(e) for e in insertions.get(name, []))
+        result.extend(dict(e) for e in insertions.get(name, [])
+                      if client in e.get("clients", ["clash", "surge"]))
         option = ",no-resolve" if by_name[name]["behavior"] == "ipcidr" and name != "cn_ip" else ""
         result.append({"id": "set-" + name, "rule": f"RULE-SET,{name},{policy}{option}"})
         if client == "surge":
@@ -185,7 +193,8 @@ def build_profiles(manifest, routing, contract, template_values=None):
     clash = active_rules(profile_entries(manifest, routing, "clash"), template_values)
     surge = active_rules(profile_entries(manifest, routing, "surge"), template_values)
     common_surge = [r for r in surge if not r.startswith("SUBNET,")]
-    if clash != [normalize_surge_rule(r, manifest) for r in common_surge]:
+    common_clash = [r for r in clash if r != QUIC_RULE]
+    if common_clash != [normalize_surge_rule(r, manifest) for r in common_surge]:
         raise ValueError("Clash/Surge routing parity failed")
     return {"rule-providers": providers, "rules": clash}, surge
 
@@ -195,7 +204,8 @@ def render_profiles(manifest, routing, contract):
     header = [
         "# Generated from one common source: sources.json + custom/client-routing.json.",
         "# UNIFIED ROUTING TEMPLATE, not a standalone connection profile.",
-        "# Same common rules/order/groups/fallbacks; only Surge has two Wi-Fi DIRECT exceptions.",
+        "# Same business rules/order/groups/fallbacks, with reviewed client differences:",
+        "# Clash keeps its non-CN UDP/443 guard; Surge uses native QUIC handling and two Wi-Fi DIRECT rules.",
         "# Fill commented private IP / Wi-Fi placeholders locally, then uncomment those rules.",
         "# No node endpoints/credentials/real SSIDs; disabled ad rules are omitted.",
     ]
