@@ -3,6 +3,10 @@
 # Keep existing nodes/policy groups, DNS, Wi-Fi exceptions and private local rules.
 # Policy names refer to existing groups; no nodes, credentials or SSIDs are published.
 rules:
+  - "DOMAIN-SUFFIX,claude-api.com,Claude"
+  - "DOMAIN-SUFFIX,claudecontentmoderation.com,Claude"
+  - "DOMAIN-KEYWORD,anthropic,Claude"
+  - "DOMAIN-KEYWORD,claude,Claude"
   - "RULE-SET,claude_domain,Claude"
   - "RULE-SET,private_ip,DIRECT,no-resolve"
   - "RULE-SET,private_domain,DIRECT"

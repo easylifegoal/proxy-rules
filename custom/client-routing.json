@@ -1,5 +1,11 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
+  "claude_guards": [
+    "DOMAIN-SUFFIX,claude-api.com",
+    "DOMAIN-SUFFIX,claudecontentmoderation.com",
+    "DOMAIN-KEYWORD,anthropic",
+    "DOMAIN-KEYWORD,claude"
+  ],
   "clash": {
     "routes": [
       ["claude_domain", "Claude"],

@@ -3,10 +3,20 @@
 import json
 import re
 
+CLAUDE_GUARDS = [
+    "DOMAIN-SUFFIX,claude-api.com",
+    "DOMAIN-SUFFIX,claudecontentmoderation.com",
+    "DOMAIN-KEYWORD,anthropic",
+    "DOMAIN-KEYWORD,claude",
+]
+
 
 def validate_routing(manifest, routing, contract):
-    if set(routing) != {"schema_version", "clash", "surge"} or routing["schema_version"] != 1:
+    if set(routing) != {"schema_version", "claude_guards", "clash", "surge"} or routing["schema_version"] != 2:
         raise ValueError("Invalid client routing schema")
+    # Explicit user-requested broad matching; never silently remove it during source sync.
+    if routing["claude_guards"] != CLAUDE_GUARDS:
+        raise ValueError("Claude guard changes require explicit review")
     expected = {r["name"] for r in manifest["rules"] if r.get("surge", True)}
     broad = {"geolocation-!cn", "cn_domain", "cn_ip"}
     for client in ("clash", "surge"):
@@ -22,6 +32,8 @@ def validate_routing(manifest, routing, contract):
             raise ValueError("Each client must route every shared set exactly once")
         if any(not re.fullmatch(r"[A-Za-z][A-Za-z0-9_-]*", p) for _, p in routes):
             raise ValueError("Invalid public policy name")
+        if dict(routes)["claude_domain"] != "Claude":
+            raise ValueError("Claude guards must route to the Claude policy")
         for first, second in contract["priority_overlaps"] + [["apns", "apple_domain"]]:
             if names.index(first) >= names.index(second):
                 raise ValueError(f"{client} routing priority reversed: {first} before {second}")
@@ -50,9 +62,13 @@ def build_profiles(manifest, routing, contract):
         }
     clash_rules, surge_rules = [], []
     for name, policy in routing["clash"]["routes"]:
+        if name == "claude_domain":
+            clash_rules.extend(f"{guard},{policy}" for guard in routing["claude_guards"])
         option = ",no-resolve" if by_name[name]["behavior"] == "ipcidr" and name != "cn_ip" else ""
         clash_rules.append(f"RULE-SET,{name},{policy}{option}")
     for name, policy in routing["surge"]["routes"]:
+        if name == "claude_domain":
+            surge_rules.extend(f"{guard},{policy}" for guard in routing["claude_guards"])
         output = by_name[name].get("output", name)
         surge_rules.append(f"RULE-SET,{base}/Surge/{output}.list,{policy}")
     clash_rules.extend(routing["clash"]["fallback"])
