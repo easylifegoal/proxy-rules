@@ -93,6 +93,8 @@ def validate_manifest(manifest: dict) -> None:
             raise ValueError(f"Unsupported input/output behavior conversion: {name}")
         if "cache_tag" in rule and not re.fullmatch(r"[A-Za-z0-9_-]+", rule["cache_tag"]):
             raise ValueError(f"Invalid cache version: {name}")
+        if "surge_no_resolve" in rule and (rule["behavior"] != "ipcidr" or not isinstance(rule["surge_no_resolve"], bool)):
+            raise ValueError(f"Invalid Surge IP resolution flag: {name}")
         if sum(key in rule for key in ("local", "upstream", "inputs")) != 1:
             raise ValueError(f"Exactly one input required: {name}")
         if "local" in rule:
@@ -255,7 +257,7 @@ def apply_overrides(entries: list[str], override: dict, behavior: str) -> list[s
     return result
 
 
-def surge_rules(entries: list[str], behavior: str) -> list[str]:
+def surge_rules(entries: list[str], behavior: str, no_resolve: bool = True) -> list[str]:
     if behavior == "classical":
         return parse_classical("\n".join(entries))
     result = set()
@@ -263,7 +265,7 @@ def surge_rules(entries: list[str], behavior: str) -> list[str]:
         if behavior == "ipcidr":
             network = ipaddress.ip_network(entry)
             kind = "IP-CIDR" if network.version == 4 else "IP-CIDR6"
-            result.add(f"{kind},{network},no-resolve")
+            result.add(f"{kind},{network}" + (",no-resolve" if no_resolve else ""))
             continue
         if "*" in entry or any(char.isspace() for char in entry):
             # Mihomo '*' matches ONE label; Surge '*' crosses dots. Never widen silently.
@@ -422,7 +424,7 @@ def build_rule(rule: dict, data: bytes | dict[str, bytes] | None, snapshots: dic
         mrs = data if unchanged else compiled.read_bytes()
         plain = ("\n".join(canonical) + "\n").encode()
         heading = f"# Generated {name}; edit sources.json/custom, not this file.\n# Provenance and license: ../metadata/sync-state.json, ../NOTICE.md\n"
-        surge = surge_rules(canonical, behavior) if rule.get("surge", True) or rule.get("classical_yaml") else None
+        surge = surge_rules(canonical, behavior, rule.get("surge_no_resolve", True)) if rule.get("surge", True) or rule.get("classical_yaml") else None
         yaml_entries = surge if rule.get("classical_yaml") else canonical
         yaml = yaml_payload(yaml_entries, heading)
         for output in [rule.get("output", name)] + rule.get("aliases", []):

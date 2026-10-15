@@ -1,6 +1,6 @@
 # 长期分类方案
 
-目标：Clash / Mihomo 与 Surge 从同一数据构建规则，分类边界可解释、上游变化可审计。只统一规则内容与更新流程，不要求两端使用相同策略、Wi-Fi 行为或兜底。实际接入以私有客户端配置为准。
+目标：Clash / Mihomo 与 Surge 从同一数据及同一公共路由定义构建规则，分类边界可解释、上游变化可审计。公共匹配规则、顺序、策略组名称和兜底统一；按用户明确选择，仅保留 Surge 两条 Wi-Fi 直连例外。实际接入以私有客户端配置为准。
 
 ## 分类边界
 
@@ -13,7 +13,7 @@
 | GlobalMedia | 下列 20 个影音服务的明确清单 | 按服务边界维护，替代宽泛的 `category-entertainment`；不含 AI、游戏和小说大集合 |
 | Google / Microsoft / Apple | 保留各自 MetaCubeX 分类 | 公司分类是较宽的兜底，不从中强删 AI、影音等合理子集 |
 | OneDrive / GitHub / PayPal / 银行 / Telegram | 保留各自专用分类 | 小类先于公司类、通用 Proxy 类 |
-| APNS | 原 QuixoticHeart 13 条 classical 规则 | 独立于普通 Apple 服务，放在 Apple 前；保留 YAML / Surge 格式 |
+| APNS | 原 QuixoticHeart 13 条 classical 规则 | 两端使用独立 APNS 策略组，普通 Apple 服务使用 Apple；APNS 放在 Apple 前，保留 YAML / Surge 格式 |
 | CN / Private / 通用 Proxy | 现有域名和 IP 来源 | 作为基础/通用分类，不在这次重构中更改用户的直连和兜底逻辑 |
 | Fake-IP 排除 | 原 wwqgtxx 来源 | 仅用于 Mihomo DNS，不当作业务路由集合 |
 
@@ -69,9 +69,9 @@
 
 IP 与域名文件分开发布。只有已明确维护的 Netflix、Telegram、Apple lite 等服务 IP 集合继续存在；不为媒体聚合自动加入整个云厂商 IP 或 ASN。APNS 是保留原混合规则的例外。
 
-`Profiles/` 现保留全部已启用路由，不再只导出共享规则集：NodeSeek、N26、IP 查询、农行检测、Safeway、Magpie、QUIC 及兜底均在原位置。`custom/client-routing.json` 的 `insertions` 按共享规则集锚点插入内联规则，不改变现有策略差异。私人地址和两个 Wi-Fi 规则以注释占位形式留在原位置，使用时须在本地填值并启用；按用户要求不保留原来已禁用的广告规则。完整模板不等于包含节点、DNS、重写或 MITM 的完整连接配置。
+`Profiles/` 由 `custom/client-routing.json` schema 5 的一份 `common` 定义生成，以 Clash 为公共基准；`surge_wifi` 只允许两处已审核的 Wi-Fi 例外。NodeSeek、N26、IP 查询、农行检测、Safeway、Magpie、QUIC 及端口兜底均统一，规则仅能引用声明过的策略组或内置动作，不直接指定节点。Tailscale 主机规则在两端都有，占位填值后启用。未启用广告规则不保留；完整模板不包含节点、DNS、重写或 MITM 配置。
 
-除分类检查外，回归测试也检查完整模板中的内联规则、顺序、私人占位项和两端策略差异。`scripts/audit_local_profiles.rb` 可本地只读比对私有配置的全部已启用路由和 provider；任何未声明的差异都会失败，输出不含私人值。
+回归测试检查两端规则在语法 / URL 归一化、排除明确声明的两条 Wi-Fi 例外后逐条相等。CN IP 的解析选项也统一，Surge 的 `cn_ip` 不再带 `no-resolve`；QUIC 同时使用共享 CN 域名和 IP provider，避免独立地理数据库导致差异。`scripts/audit_local_profiles.rb` 可只读比对私有配置全部路由、顺序、provider 及策略组引用，输出不含私人值。相同组名不代表组内当前选择自动同步；节点库、协议和运行时状态仍由各客户端管理。
 
 [custom/classification.json](../custom/classification.json) 的 `domain_priority` 是用来测试业务域名的参考顺序；不含 Wi-Fi、IP、APNS classical、CN、私有网络或最终兜底。报告中的 `winner: null` 只表示没有命中这些受测业务分类，**不是 DIRECT，也不是实际请求无法匹配任何规则**。
 
@@ -99,6 +99,6 @@ IP 与域名文件分开发布。只有已明确维护的 Netflix、Telegram、A
 2. 修改例外：用 `custom/overrides.json` 做明确、可追踪的条目调整；删除一个条目不代表排除其父后缀的覆盖，分类检查会继续验证。
 3. 新增样例：同步更新 `custom/classification.json`，把“这条不应再错分”的期望写成可执行检查。
 4. 更新发布：继续每天 UTC+8 09:17 拉取固定上游快照，验证后生成 MRS / YAML / Surge LIST；失败保留上一版。
-5. 接入客户端：先备份，保留各自策略和 Wi-Fi / 兜底，再替换对应规则订阅及检查业务规则顺序。Claude 改用 classical YAML / Surge LIST，更新 URL 与缓存路径后再移除主配置里的重复补充规则。
+5. 接入客户端：先备份，保留节点与非路由设置，补齐同名策略组，再按统一模板替换规则与 provider；恢复私人地址和 Surge Wi-Fi 值。Claude 使用 classical YAML / Surge LIST，CN IP 使用允许解析的新版 URL；校验通过后由用户决定何时重载。
 
 所有服务组件的原始文件保存在 `Sources/global_media_domain/`，精确来源 SHA、哈希、条数与筛选范围保存在 `metadata/sync-state.json`。旧 `category-entertainment` 原始文件已不再作为当前输入，历史版本可从 Git 恢复。

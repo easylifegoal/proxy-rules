@@ -1,89 +1,190 @@
 {
-  "schema_version": 4,
-  "clash": {
+  "schema_version": 5,
+  "policy_groups": [
+    "Proxy",
+    "AI",
+    "GitHub",
+    "Netflix",
+    "Magpie",
+    "Magpie-Proxy",
+    "PayPal",
+    "USBank",
+    "N26",
+    "Microsoft",
+    "OneDrive",
+    "Final",
+    "Google",
+    "GlobalMedia",
+    "APNS",
+    "Apple",
+    "Nodeseek",
+    "Chain-US-ISP",
+    "Claude"
+  ],
+  "common": {
     "insertions": [
-      {"before": "claude_domain", "rules": [
-        {"id": "tailscale-direct", "template": "IP-CIDR,{{TAILSCALE_DIRECT_IPV4}}/32,DIRECT,no-resolve"},
-        {"id": "non-cn-quic", "rule": "AND,((NETWORK,UDP),(DST-PORT,443),(NOT,((OR,((GEOSITE,cn),(GEOIP,CN)))))),REJECT"},
-        {"id": "abc-check", "rule": "DOMAIN,msmp.abchina.com.cn,REJECT"},
-        {"id": "ipify", "rule": "DOMAIN,api.ipify.org,Claude"},
-        {"id": "aws-checkip", "rule": "DOMAIN,checkip.amazonaws.com,Claude"},
-        {"id": "safeway", "rule": "DOMAIN-SUFFIX,safeway.com,Claude"},
-        {"id": "ifconfig", "rule": "DOMAIN,ifconfig.me,Proxy"}
-      ]},
-      {"before": "private_ip", "rules": [
-        {"id": "n26", "rule": "DOMAIN-KEYWORD,n26,N26"},
-        {"id": "nodeseek", "rule": "DOMAIN-SUFFIX,nodeseek.com,Nodeseek"},
-        {"id": "magpie-proxy", "rule": "DOMAIN-KEYWORD,223789,Magpie-Proxy"},
-        {"id": "magpie", "rule": "DOMAIN-KEYWORD,023168,Magpie"}
-      ]}
+      {
+        "before": "claude_domain",
+        "rules": [
+          {
+            "id": "tailscale-direct",
+            "template": "IP-CIDR,{{TAILSCALE_DIRECT_IPV4}}/32,DIRECT,no-resolve"
+          },
+          {
+            "id": "non-cn-quic",
+            "rule": "AND,((NETWORK,UDP),(DST-PORT,443),(NOT,((OR,((RULE-SET,cn_domain),(RULE-SET,cn_ip)))))),REJECT"
+          },
+          {
+            "id": "abc-check",
+            "rule": "DOMAIN,msmp.abchina.com.cn,REJECT"
+          },
+          {
+            "id": "ipify",
+            "rule": "DOMAIN,api.ipify.org,Claude"
+          },
+          {
+            "id": "aws-checkip",
+            "rule": "DOMAIN,checkip.amazonaws.com,Claude"
+          },
+          {
+            "id": "safeway",
+            "rule": "DOMAIN-SUFFIX,safeway.com,Claude"
+          },
+          {
+            "id": "ifconfig",
+            "rule": "DOMAIN,ifconfig.me,Proxy"
+          }
+        ]
+      },
+      {
+        "before": "private_ip",
+        "rules": [
+          {
+            "id": "n26",
+            "rule": "DOMAIN-KEYWORD,n26,N26"
+          },
+          {
+            "id": "nodeseek",
+            "rule": "DOMAIN-SUFFIX,nodeseek.com,Nodeseek"
+          },
+          {
+            "id": "magpie-proxy",
+            "rule": "DOMAIN-KEYWORD,223789,Magpie-Proxy"
+          },
+          {
+            "id": "magpie",
+            "rule": "DOMAIN-KEYWORD,023168,Magpie"
+          }
+        ]
+      }
     ],
     "routes": [
-      ["claude_domain", "Claude"],
-      ["private_ip", "DIRECT"],
-      ["private_domain", "DIRECT"],
-      ["ai", "AI"],
-      ["paypal_domain", "PayPal"],
-      ["usbank_domain", "USBank"],
-      ["github_domain", "GitHub"],
-      ["telegram_domain", "Proxy"],
-      ["telegram_ip", "Proxy"],
-      ["netflix_domain", "Netflix"],
-      ["netflix_ip", "Netflix"],
-      ["youtube_domain", "GlobalMedia"],
-      ["global_media_domain", "GlobalMedia"],
-      ["onedrive_domain", "OneDrive"],
-      ["google_domain", "Google"],
-      ["microsoft_domain", "Microsoft"],
-      ["apns", "Apple"],
-      ["apple_domain", "Apple"],
-      ["apple_ip", "Apple"],
-      ["geolocation-!cn", "Proxy"],
-      ["cn_domain", "DIRECT"],
-      ["cn_ip", "DIRECT"]
+      [
+        "claude_domain",
+        "Claude"
+      ],
+      [
+        "private_ip",
+        "DIRECT"
+      ],
+      [
+        "private_domain",
+        "DIRECT"
+      ],
+      [
+        "ai",
+        "AI"
+      ],
+      [
+        "paypal_domain",
+        "PayPal"
+      ],
+      [
+        "usbank_domain",
+        "USBank"
+      ],
+      [
+        "github_domain",
+        "GitHub"
+      ],
+      [
+        "telegram_domain",
+        "Proxy"
+      ],
+      [
+        "telegram_ip",
+        "Proxy"
+      ],
+      [
+        "netflix_domain",
+        "Netflix"
+      ],
+      [
+        "netflix_ip",
+        "Netflix"
+      ],
+      [
+        "youtube_domain",
+        "GlobalMedia"
+      ],
+      [
+        "global_media_domain",
+        "GlobalMedia"
+      ],
+      [
+        "onedrive_domain",
+        "OneDrive"
+      ],
+      [
+        "google_domain",
+        "Google"
+      ],
+      [
+        "microsoft_domain",
+        "Microsoft"
+      ],
+      [
+        "apns",
+        "APNS"
+      ],
+      [
+        "apple_domain",
+        "Apple"
+      ],
+      [
+        "apple_ip",
+        "Apple"
+      ],
+      [
+        "geolocation-!cn",
+        "Proxy"
+      ],
+      [
+        "cn_domain",
+        "DIRECT"
+      ],
+      [
+        "cn_ip",
+        "DIRECT"
+      ]
     ],
-    "fallback": ["DST-PORT,80,Final", "DST-PORT,443,Final", "DST-PORT,22,Final", "MATCH,DIRECT"]
+    "fallback": [
+      "DST-PORT,80,Final",
+      "DST-PORT,443,Final",
+      "DST-PORT,22,Final",
+      "MATCH,DIRECT"
+    ]
   },
-  "surge": {
-    "insertions": [
-      {"before": "paypal_domain", "rules": [
-        {"id": "home-wifi", "template": "SUBNET,SSID:{{HOME_WIFI_SSID}},DIRECT"},
-        {"id": "nodeseek", "rule": "DOMAIN-SUFFIX,nodeseek.com,aiyun"},
-        {"id": "abc-check", "rule": "DOMAIN,msmp.abchina.com.cn,REJECT"},
-        {"id": "ipify", "rule": "DOMAIN,api.ipify.org,Claude"},
-        {"id": "aws-checkip", "rule": "DOMAIN,checkip.amazonaws.com,Claude"},
-        {"id": "safeway", "rule": "DOMAIN-SUFFIX,safeway.com,Claude"},
-        {"id": "ifconfig", "rule": "DOMAIN,ifconfig.me,Proxy"},
-        {"id": "n26", "rule": "DOMAIN-KEYWORD,n26,DIRECT"}
-      ]},
-      {"before": "private_ip", "rules": [
-        {"id": "company-wifi", "template": "SUBNET,\"SSID:{{COMPANY_WIFI_SSID}}\",DIRECT"}
-      ]}
-    ],
-    "routes": [
-      ["usbank_domain", "USBank"],
-      ["apns", "APNS"],
-      ["claude_domain", "Claude"],
-      ["paypal_domain", "Paypal"],
-      ["ai", "AI"],
-      ["private_ip", "DIRECT"],
-      ["private_domain", "DIRECT"],
-      ["netflix_domain", "GlobalMedia"],
-      ["netflix_ip", "GlobalMedia"],
-      ["youtube_domain", "GlobalMedia"],
-      ["global_media_domain", "GlobalMedia"],
-      ["onedrive_domain", "Proxy"],
-      ["github_domain", "Proxy"],
-      ["telegram_domain", "Proxy"],
-      ["telegram_ip", "Proxy"],
-      ["google_domain", "Google"],
-      ["microsoft_domain", "Proxy"],
-      ["apple_domain", "Apple"],
-      ["apple_ip", "Apple"],
-      ["geolocation-!cn", "Proxy"],
-      ["cn_domain", "DIRECT"],
-      ["cn_ip", "DIRECT"]
-    ],
-    "fallback": ["RULE-SET,LAN,DIRECT", "FINAL,Proxy,dns-failed"]
-  }
+  "surge_wifi": [
+    {
+      "id": "home-wifi",
+      "after": "claude_domain",
+      "template": "SUBNET,SSID:{{HOME_WIFI_SSID}},DIRECT"
+    },
+    {
+      "id": "company-wifi",
+      "after": "usbank_domain",
+      "template": "SUBNET,\"SSID:{{COMPANY_WIFI_SSID}}\",DIRECT"
+    }
+  ]
 }

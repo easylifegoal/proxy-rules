@@ -10,7 +10,7 @@
 不上传节点、密码、UUID、私钥或完整代理配置，也不会自动修改任何客户端配置。
 仓库中的 `Profiles/` 是保留全部已启用分流规则及顺序的规则模板；仅去除连接信息，私人地址和 SSID 以原位置上的注释占位规则保留。包含节点的完整配置只保存在用户自己的设备 / iCloud。
 
-[长期分类方案](docs/classification-design.md) 说明当前规则边界、媒体服务清单、优先级与自动检查；[两端旧规则源对比](docs/source-comparison.md) 保留迁移前的审计快照。**构建完成不代表客户端已切换订阅**；各自策略、Wi-Fi 场景、规则顺序和兜底继续由原配置控制。
+[长期分类方案](docs/classification-design.md) 说明当前规则边界、媒体服务清单、优先级与自动检查；[两端旧规则源对比](docs/source-comparison.md) 保留迁移前的审计快照。**构建完成不代表客户端已切换订阅**。当前按 Clash 基准统一公共规则、顺序、策略组名称与兜底，仅保留 Surge 的两条 Wi-Fi 直连例外。
 
 - **计划每天 09:17（北京时间 / 新加坡时间，UTC+8）更新**，也支持 Actions → Run workflow 手动运行。
 - GitHub 定时任务不保证准点；长时间无仓库活动时可能暂停，请以 Actions 的实际成功记录为准。
@@ -44,7 +44,7 @@
 | `Clash/<名称>.mrs` | Mihomo，`format: mrs`；`behavior` 对应 domain 或 ipcidr；**Claude / APNS 不生成 MRS** |
 | `Clash/<名称>.yaml` | 可读 YAML，通常为 domain/ipcidr；**银行、Claude 与 APNS 使用 classical 格式** |
 | `Text/<名称>.list` | 可读规范化数据；域名/IP 清单不能直接当作 Surge RULE-SET，Claude / APNS 为 classical 规则 |
-| `Surge/<名称>.list` | Surge RULE-SET，不包含策略名称；IP 规则带 no-resolve |
+| `Surge/<名称>.list` | Surge RULE-SET，不包含策略名称；IP 默认 no-resolve，但 `cn_ip` 允许解析，与 Clash 保持一致 |
 | `Sources/*` | 未修改的上游 MRS / classical 原文，以及规范化文本，用于审核与重新生成 |
 | `metadata/sync-state.json` | 最后一次发布使用的源版本、哈希及条数，不是最近一次检查时间 |
 | `metadata/classification-audit.json` | 分类互斥、包含关系、允许的跨分类重叠，以及典型域名的建议匹配结果 |
@@ -54,39 +54,44 @@
 ### 两端规则配置
 
 - [Clash 规则配置](Profiles/Clash.rules.yaml)：23 个 provider、37 条完整路由（36 条已展开规则 + 1 条私人地址占位规则）。Fake-IP 只供现有 DNS 配置引用。Claude / APNS 使用 YAML，其余使用 MRS。
-- [Surge 规则配置](Profiles/Surge.rules.conf)：33 条完整路由（31 条已展开规则 + 2 条私人 Wi-Fi 占位规则），共享名单使用 Surge 文本规则。
+- [Surge 规则配置](Profiles/Surge.rules.conf)：同样的 37 条公共路由，加 2 条 Wi-Fi 直连例外，共 39 条（36 条已展开规则 + 1 条私人地址占位 + 2 条 Wi-Fi 占位）。
 
-两份都**不是独立可连接的完整配置**，不含节点连接信息、策略组定义、真实私人 IP / SSID、DNS 设置或控制器凭据。它们覆盖两端原有 `rules` / `[Rule]` 的全部已启用规则，不再省略自定义内联分流；未启用的两条广告规则按用户要求不收录。`custom/client-routing.json` 的 `routes` 维护共享规则集映射，`insertions` 维护带稳定 ID 的内联规则及插入位置，`fallback` 保留兜底；构建自动生成模板，不要手改输出。
+两份都**不是独立可连接的完整配置**，不含节点连接信息、策略组定义、真实私人 IP / SSID、DNS 设置或控制器凭据。公共路由只维护一份：`custom/client-routing.json` 的 `common.routes`、`common.insertions`、`common.fallback` 定义规则、顺序和兜底，`policy_groups` 声明可引用的组名；生成器仅转换语法与规则集 URL，不维护两份不同策略表。`surge_wifi` 是用户明确保留的唯一客户端例外。未启用的两条广告规则按用户要求不收录。
 
-NodeSeek、N26、农行检测、IP 查询、Safeway、Magpie、非中国 QUIC 拒绝等均已保留。模板继续保留各端策略差异：NodeSeek 在 Clash 指向 `Nodeseek`，在 Surge 指向 `aiyun`；N26 在 Clash 指向 `N26`，在 Surge 为 `DIRECT`。`aiyun` 只是既有节点/策略名称引用，仓库没有其服务器、端口或凭据；使用时须在本地保留这个名称，或明确映射到自己的策略。
+NodeSeek、N26、农行检测、IP 查询、Safeway、Magpie、非中国 QUIC 拒绝等均在两端保留。规则只指向同名策略组或 `DIRECT` / `REJECT`，不直接引用节点：NodeSeek → `Nodeseek`，N26 → `N26`，PayPal 统一大小写为 `PayPal`。Surge 本地配置补齐缺少的组；两端均由独立的 `APNS` 组处理推送，其他 Apple 流量走 `Apple`，两组不能合并。
 
 私人规则不会被丢弃或替换成一个随意的真实值，而是作为注释留在准确位置：
 
-- Clash 的 `{{TAILSCALE_DIRECT_IPV4}}`：填写自己的 Tailscale 直连主机 IPv4，并取消该规则行的注释。
+- 两端的 `{{TAILSCALE_DIRECT_IPV4}}`：填写相同的 Tailscale 直连主机 IPv4，并取消该规则行的注释。
 - Surge 的 `{{HOME_WIFI_SSID}}` / `{{COMPANY_WIFI_SSID}}`：填写自己的 Wi-Fi 名称，并取消对应规则行的注释。
 
 **注释占位规则不会自动生效，不能不填写就把模板当作与私有配置完全等价。** 合并时保留本地节点、策略组、DNS 与非路由配置。模板仅覆盖 `rules` / `[Rule]` 及所需 provider，不包括 `[Host]`、重写、MITM、Tailscale 登录段或 DNS 运行配置。
 
-| 分类 | Clash 原有策略 | Surge 原有策略 |
-| --- | --- | --- |
-| Claude / AI | Claude / AI | Claude / AI |
-| Netflix / YouTube / 其他媒体 | Netflix / GlobalMedia / GlobalMedia | 全部 GlobalMedia |
-| Google | Google | Google |
-| OneDrive / GitHub / 微软 | OneDrive / GitHub / Microsoft | 全部 Proxy |
-| APNS / Apple | Apple / Apple | APNS / Apple |
-| PayPal / 银行 / Telegram | PayPal / USBank / Proxy | Paypal / USBank / Proxy |
-| NodeSeek / N26 | Nodeseek / N26 | aiyun / DIRECT |
-| 兜底 | 80、443、22 → Final，其余 DIRECT | Proxy，保留 dns-failed |
+| 分类 | 两端统一策略 |
+| --- | --- |
+| Claude / AI | Claude / AI |
+| Netflix / YouTube / 其他媒体 | Netflix / GlobalMedia / GlobalMedia |
+| Google | Google |
+| OneDrive / GitHub / 微软 | OneDrive / GitHub / Microsoft |
+| APNS / Apple | APNS / Apple |
+| PayPal / 银行 / Telegram | PayPal / USBank / Proxy |
+| NodeSeek / N26 | Nodeseek / N26 |
+| Magpie 关键词 | Magpie / Magpie-Proxy |
+| 未匹配流量的兜底 | 80、443、22 → Final，其余 DIRECT |
 
-分类覆盖统一，不强行统一两端策略或 Wi-Fi 行为。Claude 在 AI 之前；Netflix / YouTube 在 GlobalMedia 之前；媒体在 Google / Apple 之前；OneDrive / GitHub 在微软之前；APNS 在 Apple 之前。这些顺序均有自动测试。Clash 保留中国 IP 规则可触发解析的语义；Surge 的 IP 规则条目保留 no-resolve，因此两端不能宣称所有解析行为完全相同。
+Claude 在 AI 之前；Netflix / YouTube 在 GlobalMedia 之前；媒体在 Google / Apple 之前；OneDrive / GitHub 在微软之前；APNS 在 Apple 前。这些顺序和两端公共规则逐条归一化后的相等性均有自动测试。Surge 不再追加独有的 `LAN` 规则或 `FINAL,Proxy,dns-failed`，改为与 Clash 相同的端口兜底及最终直连。
+
+中国 IP 规则在两端都允许触发解析：`sources.json` 为 `cn_ip` 设置 `surge_no_resolve: false`，发布的 Surge 条目不再附带 `no-resolve`；其余服务 / private IP 保持 `no-resolve`。两端 CN IP 订阅使用 `?v=resolve-v1` 避免旧缓存。QUIC 判断也统一引用仓库的 `cn_domain` + `cn_ip`，不再一端用独立 GEOSITE / GEOIP 数据库；仅按客户端语法转换 `NETWORK` ↔ `PROTOCOL`、`DST-PORT` ↔ `DEST-PORT`。
+
+统一的是分流配置层的条件、顺序、组名和选项，不是更换代理协议或强制同步运行状态。两端仍使用各自已有节点库；策略组中用户保存的选中项不会跨客户端自动同步，欲使用同一出口需要分别选择对应节点。DNS 配置、内核错误处理、协议能力仍可能不同，不能据此宣称所有运行行为完全相同。
 
 Claude 已统一为一个完整规则集：上游域名名单，加上 `claude-api.com` / `claudecontentmoderation.com` 域名后缀和 `claude` / `anthropic` 关键词。补充项仅在 `custom/overrides.json` 的 `claude_domain.add` 中维护，每次更新重新合并；不再在主配置重复写四条。两端集合内部不带策略名称，由主配置的 RULE-SET 指向 Claude 策略。关键词会匹配含该词的第三方域名，这是主动选择的更宽路由范围，不是官方归属认证，也不能识别名称不含这些词的所有相关服务。
 
 Clash 的 `claude_domain` 必须使用 `behavior: classical`、`format: yaml`；旧 `Clash/claude_domain.mrs` 已停止生成并移除，历史版本可从 Git 恢复。Surge 继续使用 `Surge/claude_domain.list`。两端订阅增加 `?v=classical-v1`，Clash 的缓存路径改为 `.yaml`，避免迁移时继续读取旧的仅域名缓存；URL 仍跟随 main 更新，不锁死到某个提交。必须一起切换 provider 的格式、URL、缓存路径，再移除主配置里的重复四条；不能拿 classical YAML 配 domain behavior。
 
-Surge 的家庭 Wi-Fi 占位规则位于银行 / APNS 和合并后的 `claude_domain` 规则集之后，确保 Claude 在家庭 Wi-Fi 下也优先走 Claude 策略。公司 Wi-Fi 占位规则仍在 Claude / AI / PayPal 后、媒体等通用规则前。具体 SSID 不进入本仓库。IP 查询等个人例外和 Clash 的 QUIC 策略都已进入模板，保持原来的顺序；DNS 运行设置继续由私有完整配置管理。
+Surge 的家庭 Wi-Fi 占位规则紧跟 `claude_domain`，公司 Wi-Fi 占位规则紧跟 `usbank_domain`（在 Claude / AI / PayPal 之后）；这些是唯一允许插入公共规则序列的客户端例外。Claude 仍优先于两条 Wi-Fi 直连。因为公共顺序以 Clash 为基准，原 Surge 的局部优先级会改变：QUIC、农行检测与 IP 查询现在位于家庭 Wi-Fi 之前，银行 / APNS 不再在公共列表最顶端。具体 SSID 不进入本仓库。
 
-Clash provider 缓存使用 `./providers/proxy-rules/`，避免迁移后复用旧娱乐分类缓存。原生校验会在临时配置中填入文档用 IP / Wi-Fi 名称，并给所有策略引用配上仅指向 DIRECT 的占位组，因此私人占位规则也会被检查；不会连接真实代理或重载用户配置。QUIC 原规则引用 GEOSITE / GEOIP，首次校验时 Mihomo 可能下载公开地理数据库，缓存仅放在忽略的 `.tools/profile-check/`。Linux CI 校验 Mihomo，Surge 校验需在安装 Surge 的 macOS 本地执行。
+Clash provider 缓存使用 `./providers/proxy-rules/`。原生校验会在临时配置中填入文档用 IP / Wi-Fi 名称，并给所有策略引用配上仅指向 DIRECT 的占位组；私人占位规则与 QUIC 嵌套规则也会被检查，不连接真实代理或重载用户配置。Linux CI 校验 Mihomo，Surge 校验需在安装 Surge 的 macOS 本地执行。逻辑规则格式参考 [Surge 官方文档](https://manual.nssurge.com/rules/logical.html) 和 [Mihomo 官方文档](https://wiki.metacubex.one/config/rules/)。
 
 例如 Netflix：
 
@@ -152,7 +157,7 @@ python3 scripts/validate_generated.py --surge-cli /Applications/Surge.app/Conten
 ruby scripts/audit_local_profiles.rb --clash /path/to/Mixed.yaml --surge /path/to/Mixed.conf
 ```
 
-审计只将预先约定的一个 Tailscale 主机地址和两个 Wi-Fi 名称归一化为占位符，同时比较全部 provider 定义；其他增删、策略或顺序差异都会失败，不会默默过滤。输出仅含数量和通过状态，错误仅列出位置，不输出私人配置内容，也不修改文件。默认禁用的广告规则不属于已启用路由，不纳入模板。
+审计将两端相同的 Tailscale 主机地址及 Surge 两个 Wi-Fi 名称归一化为占位符，比较全部规则、顺序、provider，并验证每个规则策略均有对应组而非直接指向节点；未声明的差异都会失败。输出仅含数量和通过状态，错误仅列出位置，不输出私人配置内容，也不修改文件。默认禁用的广告规则不纳入模板。
 
 校验同时比较 Surge、YAML 与规范化文本的匹配条目；MRS 通过编译/解码往返验证。测试的是文件及转换，不代表已经验证所有业务流量或改变了客户端行为。
 

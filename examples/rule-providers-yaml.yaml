@@ -140,7 +140,7 @@ rule-providers:
     format: yaml
     interval: 86400
     path: ./ruleset/cn_ip.yaml
-    url: https://raw.githubusercontent.com/easylifegoal/proxy-rules/main/Clash/cn_ip.yaml
+    url: https://raw.githubusercontent.com/easylifegoal/proxy-rules/main/Clash/cn_ip.yaml?v=resolve-v1
   "telegram_ip":
     type: http
     behavior: ipcidr

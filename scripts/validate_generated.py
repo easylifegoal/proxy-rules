@@ -10,7 +10,7 @@ import subprocess
 import tempfile
 
 from sync_rules import parse_entries, provider_format, surge_rules
-from client_profiles import TEST_TEMPLATE_VALUES, build_profiles, render_profiles, required_policies
+from client_profiles import TEST_TEMPLATE_VALUES, build_profiles, published_url, render_profiles, required_policies
 from rule_audit import audit_rule_outputs
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -42,7 +42,7 @@ def main():
     for rule in manifest["rules"]:
         output = rule.get("output", rule["name"])
         entries = parse_entries((ROOT / "Text" / f"{output}.list").read_text(), rule["behavior"])
-        expected = surge_rules(entries, rule["behavior"]) if rule.get("surge", True) or rule.get("classical_yaml") else None
+        expected = surge_rules(entries, rule["behavior"], rule.get("surge_no_resolve", True)) if rule.get("surge", True) or rule.get("classical_yaml") else None
         if rule.get("surge", True):
             actual = sorted(line for line in (ROOT / "Surge" / f"{output}.list").read_text().splitlines()
                             if line and not line.startswith("#"))
@@ -66,8 +66,8 @@ def main():
             provider.pop("interval")
         profile = Path(directory) / "clash-public-profile.json"
         profile.write_text(json.dumps(clash))
-        # Full QUIC rule references GEOSITE/GEOIP. Let the core cache its public
-        # geodata under ignored .tools/, never in the published repository root.
+        # Unified QUIC rule uses the same CN providers on both clients, not
+        # independently updated GEOSITE/GEOIP databases.
         core_home = ROOT / ".tools/profile-check"
         core_home.mkdir(exist_ok=True)
         result = subprocess.run([str(binary), "-t", "-d", str(core_home), "-f", str(profile)],
@@ -78,13 +78,14 @@ def main():
         print(f"Public Clash template: {len(clash['rules'])} rules checked, including private placeholders")
         if args.surge_cli:
             groups = [f"{p} = select, DIRECT" for p in required_policies(surge)]
-            base = f"https://raw.githubusercontent.com/{manifest['publish_repository']}/main/Surge/"
+            base = f"https://raw.githubusercontent.com/{manifest['publish_repository']}/main"
             local_rules = []
             for rule in surge:
-                parts = rule.split(",")
-                if parts[1].startswith(base):
-                    parts[1] = str(ROOT / "Surge" / parts[1].removeprefix(base).split("?")[0])
-                local_rules.append(",".join(parts))
+                for definition in manifest["rules"]:
+                    url = published_url(base, definition, "Surge", "list")
+                    local = str(ROOT / "Surge" / (definition.get("output", definition["name"]) + ".list"))
+                    rule = rule.replace(url, local)
+                local_rules.append(rule)
             profile = Path(directory) / "surge-public-profile.conf"
             profile.write_text("\n".join(["[General]", "loglevel = warning", "[Proxy Group]"] + groups
                                           + ["[Rule]"] + local_rules) + "\n")
@@ -92,7 +93,7 @@ def main():
                                     capture_output=True, text=True, timeout=60)
             if result.returncode:
                 raise ValueError(f"Public Surge profile validation failed:\n{result.stdout}\n{result.stderr}")
-            print(f"Public Surge template: {len(surge)} rules checked, including Wi-Fi placeholders")
+            print(f"Public Surge template: {len(surge)} rules checked, matching Clash semantics")
         for fmt in ("mrs", "yaml"):
             providers, rules = {}, []
             for rule in manifest["rules"]:

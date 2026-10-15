@@ -1,12 +1,12 @@
-# Generated from sources.json and custom/client-routing.json; do not edit outputs.
-# COMPLETE ROUTING TEMPLATE, not a standalone connection profile.
-# All routing rules/order are retained; keep existing nodes, policy groups and DNS.
-# TEMPLATE comments preserve private rules in place: fill values locally and uncomment.
-# No endpoints, credentials, private IPs or SSIDs are published; disabled ad rules are omitted.
+# Generated from one common source: sources.json + custom/client-routing.json.
+# UNIFIED ROUTING TEMPLATE, not a standalone connection profile.
+# Same common rules/order/groups/fallbacks; only Surge has two Wi-Fi DIRECT exceptions.
+# Fill commented private IP / Wi-Fi placeholders locally, then uncomment those rules.
+# No node endpoints/credentials/real SSIDs; disabled ad rules are omitted.
 rules:
   # TEMPLATE: tailscale-direct
   # - "IP-CIDR,{{TAILSCALE_DIRECT_IPV4}}/32,DIRECT,no-resolve"
-  - "AND,((NETWORK,UDP),(DST-PORT,443),(NOT,((OR,((GEOSITE,cn),(GEOIP,CN)))))),REJECT"
+  - "AND,((NETWORK,UDP),(DST-PORT,443),(NOT,((OR,((RULE-SET,cn_domain),(RULE-SET,cn_ip)))))),REJECT"
   - "DOMAIN,msmp.abchina.com.cn,REJECT"
   - "DOMAIN,api.ipify.org,Claude"
   - "DOMAIN,checkip.amazonaws.com,Claude"
@@ -32,7 +32,7 @@ rules:
   - "RULE-SET,onedrive_domain,OneDrive"
   - "RULE-SET,google_domain,Google"
   - "RULE-SET,microsoft_domain,Microsoft"
-  - "RULE-SET,apns,Apple"
+  - "RULE-SET,apns,APNS"
   - "RULE-SET,apple_domain,Apple"
   - "RULE-SET,apple_ip,Apple,no-resolve"
   - "RULE-SET,geolocation-!cn,Proxy"
@@ -184,7 +184,7 @@ rule-providers:
     format: "mrs"
     interval: 86400
     path: "./providers/proxy-rules/cn_ip.mrs"
-    url: "https://raw.githubusercontent.com/easylifegoal/proxy-rules/main/Clash/cn_ip.mrs"
+    url: "https://raw.githubusercontent.com/easylifegoal/proxy-rules/main/Clash/cn_ip.mrs?v=resolve-v1"
   "telegram_ip":
     type: "http"
     behavior: "ipcidr"
