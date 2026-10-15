@@ -131,6 +131,15 @@ class ClientProfileTests(unittest.TestCase):
             for forbidden in (b"password:", b"uuid:", b"secret:", b"SSID:", b"[Proxy]", b"proxies:"):
                 self.assertNotIn(forbidden, data)
 
+    def test_surge_home_wifi_insertion_point_is_after_complete_claude_group(self):
+        surge = render_profiles(self.manifest, self.routing, self.contract)["Profiles/Surge.rules.conf"].decode()
+        marker = "# Insert local home Wi-Fi DIRECT exceptions here, AFTER all Claude rules."
+        self.assertEqual(surge.count(marker), 1)
+        for guard in self.routing["claude_guards"]:
+            self.assertLess(surge.index(guard + ",Claude"), surge.index(marker))
+        self.assertLess(surge.index("/Surge/claude_domain.list,Claude"), surge.index(marker))
+        self.assertLess(surge.index(marker), surge.index("/Surge/paypal_domain.list,Paypal"))
+
 
 if __name__ == "__main__":
     unittest.main()

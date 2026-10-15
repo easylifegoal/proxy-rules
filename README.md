@@ -71,7 +71,7 @@
 
 Claude 另有用户明确要求保留的四条宽匹配规则：`claude-api.com` / `claudecontentmoderation.com` 域名后缀，以及 `claude` / `anthropic` 关键词，均指向 `Claude`，放在 Claude 上游集合和通用 AI / 媒体 / 地理分类之前。它们由 `custom/client-routing.json` 的 `claude_guards` 同时生成到两端主配置片段，并有防漏测验。关键词会匹配任何含该词的域名，包括第三方站点；这是主动选择的更宽路由范围，不是官方域名归属认证，也不能识别域名不含这些词的所有相关服务。关键词不支持 MRS，因此保留为主配置规则，不混入 `claude_domain.mrs`。本仓库分类互斥 / 子集检查针对上游域名集合，不代表宽匹配例外与其他业务绝不重叠。
 
-完整 Surge 配置中的家庭 Wi-Fi 例外仍应放在银行 / APNS 后、其他业务前；公司 Wi-Fi 例外仍在 Claude / AI / PayPal 后、媒体等通用规则前。具体 SSID 不进入本仓库。Clash 的 QUIC 策略、个人例外及 DNS 继续由私有完整配置管理。
+完整 Surge 配置中的家庭 Wi-Fi 直连例外应放在银行 / APNS、Claude 四条宽匹配规则及 `claude_domain` 规则集之后，确保 Claude 在家庭 Wi-Fi 下也优先走 Claude 策略；公开片段已标明插入位置。公司 Wi-Fi 例外仍在 Claude / AI / PayPal 后、媒体等通用规则前。具体 SSID 不进入本仓库。此处只改变 Claude 与家庭 Wi-Fi 的先后关系，IP 查询等其他个人例外仍保留原来的顺序。Clash 的 QUIC 策略、个人例外及 DNS 继续由私有完整配置管理。
 
 Clash provider 缓存使用 `./providers/proxy-rules/`，避免迁移后复用旧娱乐分类缓存。两份公开配置在测试时临时配上仅指向 DIRECT 的占位策略组，再执行原生语法校验；不会连接真实代理或重载用户配置。Linux CI 校验 Mihomo，Surge 校验需在安装 Surge 的 macOS 本地执行。
 

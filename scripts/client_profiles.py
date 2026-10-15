@@ -87,7 +87,12 @@ def render_profiles(manifest, routing, contract):
     for name, settings in clash["rule-providers"].items():
         lines.append(f"  {json.dumps(name)}:")
         lines += [f"    {key}: {json.dumps(value)}" for key, value in settings.items()]
+    surge_lines = []
+    for rule in surge:
+        surge_lines.append(rule)
+        if rule.endswith("/Surge/claude_domain.list,Claude"):
+            surge_lines.append("# Insert local home Wi-Fi DIRECT exceptions here, AFTER all Claude rules.")
     return {
         "Profiles/Clash.rules.yaml": ("\n".join(lines) + "\n").encode(),
-        "Profiles/Surge.rules.conf": ("\n".join(header + ["[Rule]"] + surge) + "\n").encode(),
+        "Profiles/Surge.rules.conf": ("\n".join(header + ["[Rule]"] + surge_lines) + "\n").encode(),
     }
