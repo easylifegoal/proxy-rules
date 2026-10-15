@@ -1,9 +1,22 @@
 # Generated from sources.json and custom/client-routing.json; do not edit outputs.
-# RULE-ONLY MERGE FRAGMENT, not a standalone connection profile.
-# Keep existing nodes/policy groups, DNS, Wi-Fi exceptions and private local rules.
-# Policy names refer to existing groups; no nodes, credentials or SSIDs are published.
+# COMPLETE ROUTING TEMPLATE, not a standalone connection profile.
+# All routing rules/order are retained; keep existing nodes, policy groups and DNS.
+# TEMPLATE comments preserve private rules in place: fill values locally and uncomment.
+# No endpoints, credentials, private IPs or SSIDs are published; disabled ad rules are omitted.
 rules:
+  # TEMPLATE: tailscale-direct
+  # - "IP-CIDR,{{TAILSCALE_DIRECT_IPV4}}/32,DIRECT,no-resolve"
+  - "AND,((NETWORK,UDP),(DST-PORT,443),(NOT,((OR,((GEOSITE,cn),(GEOIP,CN)))))),REJECT"
+  - "DOMAIN,msmp.abchina.com.cn,REJECT"
+  - "DOMAIN,api.ipify.org,Claude"
+  - "DOMAIN,checkip.amazonaws.com,Claude"
+  - "DOMAIN-SUFFIX,safeway.com,Claude"
+  - "DOMAIN,ifconfig.me,Proxy"
   - "RULE-SET,claude_domain,Claude"
+  - "DOMAIN-KEYWORD,n26,N26"
+  - "DOMAIN-SUFFIX,nodeseek.com,Nodeseek"
+  - "DOMAIN-KEYWORD,223789,Magpie-Proxy"
+  - "DOMAIN-KEYWORD,023168,Magpie"
   - "RULE-SET,private_ip,DIRECT,no-resolve"
   - "RULE-SET,private_domain,DIRECT"
   - "RULE-SET,ai,AI"

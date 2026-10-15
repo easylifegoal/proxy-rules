@@ -69,6 +69,10 @@
 
 IP 与域名文件分开发布。只有已明确维护的 Netflix、Telegram、Apple lite 等服务 IP 集合继续存在；不为媒体聚合自动加入整个云厂商 IP 或 ASN。APNS 是保留原混合规则的例外。
 
+`Profiles/` 现保留全部已启用路由，不再只导出共享规则集：NodeSeek、N26、IP 查询、农行检测、Safeway、Magpie、QUIC 及兜底均在原位置。`custom/client-routing.json` 的 `insertions` 按共享规则集锚点插入内联规则，不改变现有策略差异。私人地址和两个 Wi-Fi 规则以注释占位形式留在原位置，使用时须在本地填值并启用；按用户要求不保留原来已禁用的广告规则。完整模板不等于包含节点、DNS、重写或 MITM 的完整连接配置。
+
+除分类检查外，回归测试也检查完整模板中的内联规则、顺序、私人占位项和两端策略差异。`scripts/audit_local_profiles.rb` 可本地只读比对私有配置的全部已启用路由和 provider；任何未声明的差异都会失败，输出不含私人值。
+
 [custom/classification.json](../custom/classification.json) 的 `domain_priority` 是用来测试业务域名的参考顺序；不含 Wi-Fi、IP、APNS classical、CN、私有网络或最终兜底。报告中的 `winner: null` 只表示没有命中这些受测业务分类，**不是 DIRECT，也不是实际请求无法匹配任何规则**。
 
 同一份参考顺序会生成 [Clash 业务规则片段](../examples/business-rules-clash.yaml) 和 [Surge 业务规则片段](../examples/business-rules-surge.conf)。它们不是完整配置，`POLICY_*` 必须映射到各自已有策略；不能覆盖当前整段规则。APNS、服务 IP、Wi-Fi 等不包含在这个域名片段里，接入时另行保留和检查。

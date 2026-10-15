@@ -4,12 +4,13 @@
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 import subprocess
 import tempfile
 
 from sync_rules import parse_entries, provider_format, surge_rules
-from client_profiles import build_profiles, render_profiles
+from client_profiles import TEST_TEMPLATE_VALUES, build_profiles, render_profiles, required_policies
 from rule_audit import audit_rule_outputs
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -55,10 +56,9 @@ def main():
     binary = ROOT / ".tools/mihomo"
     with tempfile.TemporaryDirectory(prefix="validate-", dir=ROOT / ".tools") as directory:
         # Rule fragments need dummy groups for native syntax/order validation, never real nodes.
-        clash, surge = build_profiles(manifest, routing, contract)
+        clash, surge = build_profiles(manifest, routing, contract, TEST_TEMPLATE_VALUES)
         clash["proxy-groups"] = [{"name": policy, "type": "select", "proxies": ["DIRECT"]}
-                                  for policy in sorted({r[1] for r in routing["clash"]["routes"]}
-                                                       | {"Final"}) if policy != "DIRECT"]
+                                  for policy in required_policies(clash["rules"])]
         for provider in clash["rule-providers"].values():
             provider["type"] = "file"
             provider["path"] = str(ROOT / "Clash" / Path(provider["path"]).name)
@@ -66,14 +66,18 @@ def main():
             provider.pop("interval")
         profile = Path(directory) / "clash-public-profile.json"
         profile.write_text(json.dumps(clash))
-        result = subprocess.run([str(binary), "-t", "-d", str(ROOT), "-f", str(profile)],
+        # Full QUIC rule references GEOSITE/GEOIP. Let the core cache its public
+        # geodata under ignored .tools/, never in the published repository root.
+        core_home = ROOT / ".tools/profile-check"
+        core_home.mkdir(exist_ok=True)
+        result = subprocess.run([str(binary), "-t", "-d", str(core_home), "-f", str(profile)],
+                                env={**os.environ, "SAFE_PATHS": str(ROOT / "Clash")},
                                 capture_output=True, text=True, timeout=120)
         if result.returncode:
             raise ValueError(f"Public Clash profile validation failed:\n{result.stdout}\n{result.stderr}")
-        print("Public Clash rule profile: native core check passed with placeholder groups")
+        print(f"Public Clash template: {len(clash['rules'])} rules checked, including private placeholders")
         if args.surge_cli:
-            groups = [f"{p} = select, DIRECT" for p in sorted({r[1] for r in routing["surge"]["routes"]})
-                      if p != "DIRECT"]
+            groups = [f"{p} = select, DIRECT" for p in required_policies(surge)]
             base = f"https://raw.githubusercontent.com/{manifest['publish_repository']}/main/Surge/"
             local_rules = []
             for rule in surge:
@@ -88,7 +92,7 @@ def main():
                                     capture_output=True, text=True, timeout=60)
             if result.returncode:
                 raise ValueError(f"Public Surge profile validation failed:\n{result.stdout}\n{result.stderr}")
-            print("Public Surge rule profile: native offline check passed with placeholder groups")
+            print(f"Public Surge template: {len(surge)} rules checked, including Wi-Fi placeholders")
         for fmt in ("mrs", "yaml"):
             providers, rules = {}, []
             for rule in manifest["rules"]:
