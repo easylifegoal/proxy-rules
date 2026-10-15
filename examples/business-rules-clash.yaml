@@ -12,6 +12,7 @@ rules:
   - "RULE-SET,paypal_domain,POLICY_paypal_domain"
   - "RULE-SET,usbank_domain,POLICY_usbank_domain"
   - "RULE-SET,telegram_domain,POLICY_telegram_domain"
+  - "RULE-SET,meta_domain,POLICY_meta_domain"
   - "RULE-SET,google_domain,POLICY_google_domain"
   - "RULE-SET,microsoft_domain,POLICY_microsoft_domain"
   - "RULE-SET,apple_domain,POLICY_apple_domain"

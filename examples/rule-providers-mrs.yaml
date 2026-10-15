@@ -43,6 +43,13 @@ rule-providers:
     interval: 86400
     path: ./ruleset/telegram_domain.mrs
     url: https://raw.githubusercontent.com/easylifegoal/proxy-rules/main/Clash/telegram_domain.mrs
+  "meta_domain":
+    type: http
+    behavior: domain
+    format: mrs
+    interval: 86400
+    path: ./ruleset/meta_domain.mrs
+    url: https://raw.githubusercontent.com/easylifegoal/proxy-rules/main/Clash/meta_domain.mrs
   "global_media_domain":
     type: http
     behavior: domain

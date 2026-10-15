@@ -30,6 +30,7 @@ rules:
   - "RULE-SET,netflix_ip,Netflix,no-resolve"
   - "RULE-SET,youtube_domain,GlobalMedia"
   - "RULE-SET,global_media_domain,GlobalMedia"
+  - "RULE-SET,meta_domain,Meta"
   - "RULE-SET,onedrive_domain,OneDrive"
   - "RULE-SET,google_domain,Google"
   - "RULE-SET,microsoft_domain,Microsoft"
@@ -88,6 +89,13 @@ rule-providers:
     interval: 86400
     path: "./providers/proxy-rules/telegram_domain.mrs"
     url: "https://raw.githubusercontent.com/easylifegoal/proxy-rules/main/Clash/telegram_domain.mrs"
+  "meta_domain":
+    type: "http"
+    behavior: "domain"
+    format: "mrs"
+    interval: 86400
+    path: "./providers/proxy-rules/meta_domain.mrs"
+    url: "https://raw.githubusercontent.com/easylifegoal/proxy-rules/main/Clash/meta_domain.mrs"
   "global_media_domain":
     type: "http"
     behavior: "domain"

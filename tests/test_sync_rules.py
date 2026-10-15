@@ -12,7 +12,7 @@ class ValidationTests(unittest.TestCase):
     def test_current_manifest(self):
         manifest = json.loads((sync.ROOT / 'sources.json').read_text())
         sync.validate_manifest(manifest)
-        self.assertEqual(len(manifest['rules']), 23)
+        self.assertEqual(len(manifest['rules']), 24)
 
     def test_invalid_composition_rejected(self):
         for inputs in ([], [{'id': '../bad', 'upstream': 'metacubex', 'path': 'a.mrs', 'minimum_entries': 1}],

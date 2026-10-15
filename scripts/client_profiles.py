@@ -51,6 +51,8 @@ def validate_routing(manifest, routing, contract):
         raise ValueError("Rules may target declared policy groups, not individual nodes")
     if dict(routes)["claude_domain"] != "Claude":
         raise ValueError("Claude guards must route to the Claude policy")
+    if dict(routes)["meta_domain"] != "Meta":
+        raise ValueError("Meta must use its own policy group")
     if any(dict(routes)[name] != policy for name, policy in
            (("apns", "APNS"), ("apple_domain", "Apple"), ("apple_ip", "Apple"))):
         raise ValueError("APNS and Apple must use separate policy groups")

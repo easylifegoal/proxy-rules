@@ -15,6 +15,7 @@
     "Final",
     "Google",
     "GlobalMedia",
+    "Meta",
     "APNS",
     "Apple",
     "Nodeseek",
@@ -131,6 +132,10 @@
       [
         "global_media_domain",
         "GlobalMedia"
+      ],
+      [
+        "meta_domain",
+        "Meta"
       ],
       [
         "onedrive_domain",

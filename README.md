@@ -6,7 +6,7 @@
 
 [工作流与运行记录](https://github.com/easylifegoal/proxy-rules/actions/workflows/sync-rules.yml)
 
-结合 Clash 与 Surge 的分类需求，共 23 组：MetaCubeX 派生分类 20 组（含服务清单聚合的 GlobalMedia）、APNS 1 组、Fake-IP 排除名单 1 组、手动维护的银行域名 1 组。
+结合 Clash 与 Surge 的分类需求，共 24 组：MetaCubeX 派生分类 21 组（含 Meta 公司合集及服务清单聚合的 GlobalMedia）、APNS 1 组、Fake-IP 排除名单 1 组、手动维护的银行域名 1 组。
 不上传节点、密码、UUID、私钥或完整代理配置，也不会自动修改任何客户端配置。
 仓库中的 `Profiles/` 是保留全部已启用分流规则及顺序的规则模板；仅去除连接信息，私人地址和 SSID 以原位置上的注释占位规则保留。包含节点的完整配置只保存在用户自己的设备 / iCloud。
 
@@ -27,6 +27,7 @@
 | AI、GitHub、Telegram、Netflix、PayPal、OneDrive、微软、Google、Apple、私有域名、国内域名、国外域名 | MetaCubeX `meta/geo/geosite` |
 | `claude_domain` | MetaCubeX `anthropic.mrs` 解码后合并 `custom/overrides.json` 的四条宽匹配规则，发布完整 classical YAML / Surge；仅上游基线属于 AI 子集 |
 | `youtube_domain` | MetaCubeX `youtube.mrs`，可单独路由，属于 GlobalMedia 大集合 |
+| `meta_domain` | MetaCubeX `meta.mrs` 公司合集，覆盖 Facebook / Instagram / Threads / WhatsApp / Messenger / Oculus 等；独立路由到 Meta，AI 优先匹配 |
 | `global_media_domain` | 在 `sources.json` 明确列出 20 个影音服务，同一 MetaCubeX 快照聚合；**不再使用 category-entertainment**，不引入游戏、小说或 AI 大分类；Disney+ 使用审核过的精确条目白名单 |
 | 私有、中国、Telegram、Netflix IP | MetaCubeX `meta/geo/geoip` |
 | Apple IP | MetaCubeX `meta/geo-lite/geoip/apple.mrs`，保留原来的 lite 来源 |
@@ -53,8 +54,8 @@
 
 ### 两端规则配置
 
-- [Clash 规则配置](Profiles/Clash.rules.yaml)：23 个 provider、36 条公共路由，加 1 条 Clash 专用 UDP/443 拦截，共 37 条（36 条已展开规则 + 1 条私人地址占位规则）。Fake-IP 只供现有 DNS 配置引用。Claude / APNS 使用 YAML，其余使用 MRS。
-- [Surge 规则配置](Profiles/Surge.rules.conf)：同样的 36 条公共路由，加 2 条 Wi-Fi 直连例外，共 38 条（35 条已展开规则 + 1 条私人地址占位 + 2 条 Wi-Fi 占位）；不输出 UDP/443 拦截规则。
+- [Clash 规则配置](Profiles/Clash.rules.yaml)：24 个 provider、37 条公共路由，加 1 条 Clash 专用 UDP/443 拦截，共 38 条（37 条已展开规则 + 1 条私人地址占位规则）。Fake-IP 只供现有 DNS 配置引用。Claude / APNS 使用 YAML，其余使用 MRS。
+- [Surge 规则配置](Profiles/Surge.rules.conf)：同样的 37 条公共路由，加 2 条 Wi-Fi 直连例外，共 39 条（36 条已展开规则 + 1 条私人地址占位 + 2 条 Wi-Fi 占位）；不输出 UDP/443 拦截规则。
 
 两份都**不是独立可连接的完整配置**，不含节点连接信息、策略组定义、真实私人 IP / SSID、DNS 设置或控制器凭据。公共路由只维护一份：`custom/client-routing.json` schema 6 的 `common.routes`、`common.insertions`、`common.fallback` 定义规则、顺序和兜底，`policy_groups` 声明可引用的组名；不维护两份不同业务策略表。客户端差异明确限定为：`surge_wifi` 的两条 Wi-Fi 直连，以及 `non-cn-quic` 上的 `"clients": ["clash"]`（Surge 使用原生 QUIC 处理）。构建校验拒绝把其他业务规则设为单端专用。未启用的两条广告规则按用户要求不收录。
 
@@ -71,6 +72,7 @@ NodeSeek、N26、农行检测、IP 查询、Safeway、Magpie 等业务规则均�
 | --- | --- |
 | Claude / AI | Claude / AI |
 | Netflix / YouTube / 其他媒体 | Netflix / GlobalMedia / GlobalMedia |
+| Facebook / Instagram / Threads / WhatsApp / Messenger / Oculus 等 | Meta |
 | Google | Google |
 | OneDrive / GitHub / 微软 | OneDrive / GitHub / Microsoft |
 | APNS / Apple | APNS / Apple |
@@ -79,7 +81,9 @@ NodeSeek、N26、农行检测、IP 查询、Safeway、Magpie 等业务规则均�
 | Magpie 关键词 | Magpie / Magpie-Proxy |
 | 未匹配流量的兜底 | 80、443、22 → Final，其余 DIRECT |
 
-Claude 在 AI 之前；Netflix / YouTube 在 GlobalMedia 之前；媒体在 Google / Apple 之前；OneDrive / GitHub 在微软之前；APNS 在 Apple 前。这些顺序和两端公共规则逐条归一化后的相等性均有自动测试。Surge 不再追加独有的 `LAN` 规则或 `FINAL,Proxy,dns-failed`，改为与 Clash 相同的端口兜底及最终直连。
+Claude 在 AI 之前；AI 在 Meta 等公司分类之前，`meta.ai` 继续走 AI；Netflix / YouTube 在 GlobalMedia 之前；媒体在 Google / Apple 之前；OneDrive / GitHub 在微软之前；APNS 在 Apple 前。Meta 在通用国外规则之前，不并入 GlobalMedia。这些顺序和两端公共规则逐条归一化后的相等性均有自动测试。Surge 不再追加独有的 `LAN` 规则或 `FINAL,Proxy,dns-failed`，改为与 Clash 相同的端口兜底及最终直连。
+
+Meta 是社区维护的公司范围合集，不是官方归属认证，也不保证覆盖所有端点。保留上游较宽的品牌、开发者及相关域名；与 AI 的合理交叉通过优先级处理，不从 Meta 源中硬删。两端完整配置新增的 Meta 组默认跟随 Proxy，也可单独选节点；已有 Surge Wi-Fi 例外仍可能提前直连。
 
 中国 IP 规则在两端都允许触发解析：`sources.json` 为 `cn_ip` 设置 `surge_no_resolve: false`，发布的 Surge 条目不再附带 `no-resolve`；其余服务 / private IP 保持 `no-resolve`。两端 CN IP 订阅使用 `?v=resolve-v1` 避免旧缓存。
 

@@ -45,7 +45,7 @@ class LocalProfileAuditTests(unittest.TestCase):
         result = self.run_audit()
         self.assertEqual(result.returncode, 0, result.stderr)
         report = json.loads(result.stdout)
-        self.assertEqual((report['clash_enabled_rules'], report['surge_enabled_rules']), (37, 38))
+        self.assertEqual((report['clash_enabled_rules'], report['surge_enabled_rules']), (38, 39))
         self.assertTrue(report['complete_ordered_match'])
         self.assertTrue(report['clash_only_quic_guard'])
         self.assertFalse(report['surge_rule_level_quic_reject'])

@@ -35,14 +35,14 @@ class ClientProfileTests(unittest.TestCase):
             clash, surge = self.build(templates)
             self.assertEqual([r for r in clash["rules"] if r != QUIC_RULE],
                              [normalize_surge_rule(r, self.manifest) for r in surge if not r.startswith("SUBNET,")])
-            self.assertEqual(len(clash["rules"]), 37 if templates else 36)
-            self.assertEqual(len(surge), 38 if templates else 35)
+            self.assertEqual(len(clash["rules"]), 38 if templates else 37)
+            self.assertEqual(len(surge), 39 if templates else 36)
             self.assertEqual(required_policies(clash["rules"]), required_policies(surge))
 
     def test_private_settings_and_dns_rule_not_routed(self):
         clash, surge = self.build()
         self.assertEqual(set(clash), {"rules", "rule-providers"})
-        self.assertEqual(len(clash["rule-providers"]), 23)
+        self.assertEqual(len(clash["rule-providers"]), 24)
         self.assertFalse(any("fakeipfilter" in r for r in clash["rules"] + surge))
         for p in clash["rule-providers"].values():
             self.assertTrue(p["url"].startswith("https://raw.githubusercontent.com/easylifegoal/proxy-rules/main/Clash/"))
@@ -198,6 +198,22 @@ class ClientProfileTests(unittest.TestCase):
         next(r for r in self.routing["common"]["routes"] if r[0] == "claude_domain")[1] = "Proxy"
         with self.assertRaisesRegex(ValueError, "Claude guards"):
             validate_routing(self.manifest, self.routing, self.contract)
+
+    def test_meta_is_separate_and_ai_wins_before_company_fallback(self):
+        clash, surge = self.build()
+        rules = clash["rules"]
+        meta = "RULE-SET,meta_domain,Meta"
+        self.assertEqual(rules.count(meta), 1)
+        self.assertLess(rules.index("RULE-SET,ai,AI"), rules.index(meta))
+        self.assertLess(rules.index(meta), rules.index("RULE-SET,geolocation-!cn,Proxy"))
+        self.assertTrue(any(r.endswith("/meta_domain.list,Meta") for r in surge))
+        provider = clash["rule-providers"]["meta_domain"]
+        self.assertEqual((provider["behavior"], provider["format"]), ("domain", "mrs"))
+        for policy in ("GlobalMedia", "Proxy", "AI"):
+            routing = copy.deepcopy(self.routing)
+            next(r for r in routing["common"]["routes"] if r[0] == "meta_domain")[1] = policy
+            with self.subTest(policy=policy), self.assertRaisesRegex(ValueError, "own policy group"):
+                validate_routing(self.manifest, routing, self.contract)
 
     def test_apns_and_apple_cannot_be_merged(self):
         for name, policy in (("apns", "Apple"), ("apple_domain", "APNS"), ("apple_ip", "APNS")):

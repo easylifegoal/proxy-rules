@@ -11,6 +11,7 @@
 | Netflix | 现有 MetaCubeX 域名和 IP 集合 | 需要独立策略时先于 GlobalMedia |
 | YouTube | 新增 MetaCubeX `youtube` | 可单独路由，也可直接指向现有 GlobalMedia 策略；不强制新增客户端策略组 |
 | GlobalMedia | 下列 20 个影音服务的明确清单 | 按服务边界维护，替代宽泛的 `category-entertainment`；不含 AI、游戏和小说大集合 |
+| Meta | MetaCubeX `meta` 公司合集，包含 Facebook / Instagram / Threads / WhatsApp / Messenger / Oculus 等 | 单独使用 Meta 组，放在 AI 后、通用国外规则前；`meta.ai` 优先走 AI，不并入 GlobalMedia |
 | Google / Microsoft / Apple | 保留各自 MetaCubeX 分类 | 公司分类是较宽的兜底，不从中强删 AI、影音等合理子集 |
 | OneDrive / GitHub / PayPal / 银行 / Telegram | 保留各自专用分类 | 小类先于公司类、通用 Proxy 类 |
 | APNS | 原 QuixoticHeart 13 条 classical 规则 | 两端使用独立 APNS 策略组，普通 Apple 服务使用 Apple；APNS 放在 Apple 前，保留 YAML / Surge 格式 |
@@ -18,6 +19,8 @@
 | Fake-IP 排除 | 原 wwqgtxx 来源 | 仅用于 Mihomo DNS，不当作业务路由集合 |
 
 不追求所有集合完全互斥：YouTube 属于 Google、Apple Music 属于 Apple，是正常的包含关系。拆成“小类覆盖大类”比从公司集合不断剔除子集更稳健。否则，某个客户端未启用小类时反而可能漏掉原本应有的公司分类。
+
+Meta 合集保留上游公司分类的广覆盖范围，可能含开发者项目、品牌变体及相关域名；不是每个域名所有权的认证，也不能保证穷尽全部端点。AI 与 Meta 的交叉允许但强制 AI 优先，GlobalMedia 与 Meta 的交叉需人工审核，避免社交平台被自动并入媒体。
 
 ## GlobalMedia 的明确服务清单
 
@@ -61,7 +64,7 @@
 下面只定义业务分类之间的局部先后，不是可直接覆盖用户配置的完整规则顺序。
 
 1. 保留各端已有的本地安全规则、局域网处理、用户例外和 Wi-Fi 场景；它们是否提前匹配应按用户意图保留。
-2. Claude 在 AI 前；AI 在 Google / Microsoft 等公司分类前。
+2. Claude 在 AI 前；AI 在 Meta / Google / Microsoft 等公司分类前。
 3. 若启用 Netflix、YouTube 专用路由，则放在 GlobalMedia 前；无需专用策略时可让它们指向同一个 GlobalMedia 策略。
 4. GlobalMedia 在 Google / Apple 等公司分类前，避免 YouTube、Apple TV+ / Music 被公司组提前接走。
 5. OneDrive、GitHub 在 Microsoft 前；APNS 在 Apple 前。
@@ -84,8 +87,8 @@ IP 与域名文件分开发布。只有已明确维护的 Netflix、Telegram、A
 - **互斥检查**：GlobalMedia 与 Claude 上游域名基线、AI 不能有域名匹配范围交叉。不只比较字符串，还检查父后缀、子域名和根域名边界；例如错误加入 `+.com` 也会被发现。此项不对 Claude 的宽匹配补充规则宣称完全互斥。
 - **包含检查**：Claude 上游基线必须被 AI 覆盖；Netflix、YouTube 必须被 GlobalMedia 覆盖。上游分类拆分或漏收时及时失败。完整 Claude classical 集合不受这个子集假设约束。
 - **Claude 完整集合检查**：独立检查全部上游规则仍在，并强制保留两个域名后缀和 `claude` / `anthropic` 两个关键词；验证正反匹配样例。YAML / Surge 的完整条目集合必须一致，不能只检查上游基线。主配置仅留一个 RULE-SET 引用，位于 Wi-Fi 直连前；不发布不完整的 Claude MRS。
-- **优先级检查**：记录 Google / AI、Google / YouTube、Apple / 媒体等合理交叉，验证参考小类先于大类。
-- **域名回归检查**：验证 Claude、Gemini、Copilot、YouTube、Apple TV+、银行等典型域名；反向验证 Steam、小说、Disney 乐园和通用 CDN 随机子域不应命中媒体。
+- **优先级检查**：记录 Meta / AI、Google / AI、Google / YouTube、Apple / 媒体等合理交叉，验证参考小类先于大类。
+- **域名回归检查**：验证 Claude、Gemini、Copilot、Meta AI、Facebook、Instagram 及资源 CDN、Threads、WhatsApp、Messenger、Oculus、YouTube、Apple TV+、银行等典型域名；反向验证 Steam、小说、Disney 乐园和通用 CDN 随机子域不应命中媒体。Meta 路由必须使用独立组，不能改指向 GlobalMedia。
 - **每组件检查**：每份服务源都必须可下载、可解码、满足最低条数和数量变化阈值。不会忽略下载失败的某个服务后继续发布残缺聚合。
 - **精确选择检查**：Disney+ 白名单条目若从上游消失，要求人工审核；新增上游品牌域名不会自动进入媒体。
 
