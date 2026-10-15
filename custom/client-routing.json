@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "clash": {
+    "routes": [
+      ["claude_domain", "Claude"],
+      ["private_ip", "DIRECT"],
+      ["private_domain", "DIRECT"],
+      ["ai", "AI"],
+      ["paypal_domain", "PayPal"],
+      ["usbank_domain", "USBank"],
+      ["github_domain", "GitHub"],
+      ["telegram_domain", "Proxy"],
+      ["telegram_ip", "Proxy"],
+      ["netflix_domain", "Netflix"],
+      ["netflix_ip", "Netflix"],
+      ["youtube_domain", "GlobalMedia"],
+      ["global_media_domain", "GlobalMedia"],
+      ["onedrive_domain", "OneDrive"],
+      ["google_domain", "Google"],
+      ["microsoft_domain", "Microsoft"],
+      ["apns", "Apple"],
+      ["apple_domain", "Apple"],
+      ["apple_ip", "Apple"],
+      ["geolocation-!cn", "Proxy"],
+      ["cn_domain", "DIRECT"],
+      ["cn_ip", "DIRECT"]
+    ],
+    "fallback": ["DST-PORT,80,Final", "DST-PORT,443,Final", "DST-PORT,22,Final", "MATCH,DIRECT"]
+  },
+  "surge": {
+    "routes": [
+      ["usbank_domain", "USBank"],
+      ["apns", "APNS"],
+      ["claude_domain", "Claude"],
+      ["paypal_domain", "Paypal"],
+      ["ai", "AI"],
+      ["private_ip", "DIRECT"],
+      ["private_domain", "DIRECT"],
+      ["netflix_domain", "GlobalMedia"],
+      ["netflix_ip", "GlobalMedia"],
+      ["youtube_domain", "GlobalMedia"],
+      ["global_media_domain", "GlobalMedia"],
+      ["onedrive_domain", "Proxy"],
+      ["github_domain", "Proxy"],
+      ["telegram_domain", "Proxy"],
+      ["telegram_ip", "Proxy"],
+      ["google_domain", "Google"],
+      ["microsoft_domain", "Proxy"],
+      ["apple_domain", "Apple"],
+      ["apple_ip", "Apple"],
+      ["geolocation-!cn", "Proxy"],
+      ["cn_domain", "DIRECT"],
+      ["cn_ip", "DIRECT"]
+    ],
+    "fallback": ["RULE-SET,LAN,DIRECT", "FINAL,Proxy,dns-failed"]
+  }
+}

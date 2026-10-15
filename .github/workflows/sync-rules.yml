@@ -79,7 +79,7 @@ jobs:
         run: python3 scripts/validate_generated.py
       - name: Publish changed rule files only
         run: |
-          git add -- Clash Surge Sources Text examples metadata
+          git add -- Clash Surge Sources Text examples metadata Profiles
           if git diff --cached --quiet; then
             echo "No rule-content changes; nothing to publish."
             exit 0

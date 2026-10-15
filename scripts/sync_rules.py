@@ -20,8 +20,10 @@ from urllib.request import Request, urlopen
 
 if __package__:
     from .classification import audit_classification
+    from .client_profiles import render_profiles
 else:
     from classification import audit_classification
+    from client_profiles import render_profiles
 
 ROOT = Path(__file__).resolve().parents[1]
 MAX_DOWNLOAD = 20 * 1024 * 1024
@@ -445,7 +447,7 @@ def publish(root: Path, artifacts: dict[str, bytes], state: dict, check: bool) -
         target = root / safe_relative(path)
         if not target.exists():
             continue
-        if (PurePosixPath(path).parts[0] not in {"Clash", "Surge", "Sources", "Text", "examples", "metadata"}
+        if (PurePosixPath(path).parts[0] not in {"Clash", "Surge", "Sources", "Text", "examples", "metadata", "Profiles"}
                 or target.is_symlink() or not target.resolve().is_relative_to(root.resolve())
                 or not target.is_file() or digest(target.read_bytes()) != expected_hash):
             raise ValueError(f"Refusing to remove modified/unsafe obsolete output: {path}")
@@ -517,6 +519,8 @@ def main():
                    for r in manifest["rules"] if r["behavior"] == "domain" and r.get("surge", True)}
     artifacts["metadata/classification-audit.json"] = json_bytes(audit_classification(domain_sets, contract))
     artifacts.update(render_examples(manifest, contract))
+    routing = json.loads((ROOT / "custom/client-routing.json").read_text())
+    artifacts.update(render_profiles(manifest, routing, contract))
     state = {"schema_version": 1, "converter": "mihomo v1.19.32", "upstreams": snapshots, "rules": records,
              "output_sha256": {path: digest(data) for path, data in sorted(artifacts.items())}}
     changed = publish(ROOT, artifacts, state, args.check)

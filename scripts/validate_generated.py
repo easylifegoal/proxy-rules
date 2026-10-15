@@ -9,6 +9,7 @@ import subprocess
 import tempfile
 
 from sync_rules import audit_classification, parse_entries, provider_format, surge_rules
+from client_profiles import build_profiles, render_profiles
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -18,6 +19,12 @@ def main():
     parser.add_argument("--surge-cli", type=Path, help="Optional local Surge offline profile checker")
     args = parser.parse_args()
     manifest = json.loads((ROOT / "sources.json").read_text())
+    routing = json.loads((ROOT / "custom/client-routing.json").read_text())
+    contract = json.loads((ROOT / "custom/classification.json").read_text())
+    profiles = render_profiles(manifest, routing, contract)
+    for relative, data in profiles.items():
+        if (ROOT / relative).read_bytes() != data:
+            raise ValueError(f"Stale public profile: {relative}")
     state = json.loads((ROOT / "metadata/sync-state.json").read_text())
     for relative, expected in state["output_sha256"].items():
         actual = hashlib.sha256((ROOT / relative).read_bytes()).hexdigest()
@@ -46,6 +53,36 @@ def main():
                 raise ValueError(f"Classical YAML and canonical entries differ: {output}")
     binary = ROOT / ".tools/mihomo"
     with tempfile.TemporaryDirectory(prefix="validate-", dir=ROOT / ".tools") as directory:
+        # Rule fragments need dummy groups for native syntax/order validation, never real nodes.
+        clash, surge = build_profiles(manifest, routing, contract)
+        clash["proxy-groups"] = [{"name": policy, "type": "select", "proxies": ["DIRECT"]}
+                                  for policy in sorted({r[1] for r in routing["clash"]["routes"]}
+                                                       | {"Final"}) if policy != "DIRECT"]
+        for provider in clash["rule-providers"].values():
+            provider["type"] = "file"
+            provider["path"] = str(ROOT / "Clash" / Path(provider["path"]).name)
+            provider.pop("url")
+            provider.pop("interval")
+        profile = Path(directory) / "clash-public-profile.json"
+        profile.write_text(json.dumps(clash))
+        result = subprocess.run([str(binary), "-t", "-d", str(ROOT), "-f", str(profile)],
+                                capture_output=True, text=True, timeout=120)
+        if result.returncode:
+            raise ValueError(f"Public Clash profile validation failed:\n{result.stdout}\n{result.stderr}")
+        print("Public Clash rule profile: native core check passed with placeholder groups")
+        if args.surge_cli:
+            groups = [f"{p} = select, DIRECT" for p in sorted({r[1] for r in routing["surge"]["routes"]})
+                      if p != "DIRECT"]
+            base = f"https://raw.githubusercontent.com/{manifest['publish_repository']}/main/Surge/"
+            local_rules = [r.replace(base, str(ROOT / "Surge") + "/") for r in surge]
+            profile = Path(directory) / "surge-public-profile.conf"
+            profile.write_text("\n".join(["[General]", "loglevel = warning", "[Proxy Group]"] + groups
+                                          + ["[Rule]"] + local_rules) + "\n")
+            result = subprocess.run([str(args.surge_cli), "--check", str(profile)],
+                                    capture_output=True, text=True, timeout=60)
+            if result.returncode:
+                raise ValueError(f"Public Surge profile validation failed:\n{result.stdout}\n{result.stderr}")
+            print("Public Surge rule profile: native offline check passed with placeholder groups")
         for fmt in ("mrs", "yaml"):
             providers, rules = {}, []
             for rule in manifest["rules"]:

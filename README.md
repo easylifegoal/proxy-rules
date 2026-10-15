@@ -8,6 +8,7 @@
 
 结合 Clash 与 Surge 的分类需求，共 23 组：MetaCubeX 派生分类 20 组（含服务清单聚合的 GlobalMedia）、APNS 1 组、Fake-IP 排除名单 1 组、手动维护的银行域名 1 组。
 不上传节点、密码、UUID、私钥或完整代理配置，也不会自动修改任何客户端配置。
+仓库中的 `Profiles/` 是去除连接信息、私人例外和 SSID 的规则合并片段；包含节点的完整配置只保存在用户自己的设备 / iCloud。
 
 [长期分类方案](docs/classification-design.md) 说明当前规则边界、媒体服务清单、优先级与自动检查；[两端旧规则源对比](docs/source-comparison.md) 保留迁移前的审计快照。**构建完成不代表客户端已切换订阅**；各自策略、Wi-Fi 场景、规则顺序和兜底继续由原配置控制。
 
@@ -46,6 +47,31 @@
 | `Sources/*` | 未修改的上游 MRS / classical 原文，以及规范化文本，用于审核与重新生成 |
 | `metadata/sync-state.json` | 最后一次发布使用的源版本、哈希及条数，不是最近一次检查时间 |
 | `metadata/classification-audit.json` | 分类互斥、包含关系、允许的跨分类重叠，以及典型域名的建议匹配结果 |
+| `Profiles/Clash.rules.yaml` | 可合并到现有 Mihomo 配置的 `rules` + `rule-providers`，含已映射的策略名称 |
+| `Profiles/Surge.rules.conf` | 可合并到现有 Surge 配置的 `[Rule]`，含已映射的策略名称 |
+
+### 两端规则配置
+
+- [Clash 规则配置](Profiles/Clash.rules.yaml)：23 个 provider，22 组共享路由规则；Fake-IP 只供现有 DNS 配置引用。APNS 使用 YAML，其余使用 MRS。
+- [Surge 规则配置](Profiles/Surge.rules.conf)：同样的 22 组路由名单，使用 Surge 文本规则。
+
+两份都**不是独立可连接的完整配置**，不含节点、策略组定义、私人域名例外、内网 IP、SSID、DNS 或控制器凭据。合并时保留这些本地内容，不能直接覆盖完整文件。`custom/client-routing.json` 维护策略映射与顺序，每次构建自动生成；无需手改输出。
+
+| 分类 | Clash 原有策略 | Surge 原有策略 |
+| --- | --- | --- |
+| Claude / AI | Claude / AI | Claude / AI |
+| Netflix / YouTube / 其他媒体 | Netflix / GlobalMedia / GlobalMedia | 全部 GlobalMedia |
+| Google | Google | Google |
+| OneDrive / GitHub / 微软 | OneDrive / GitHub / Microsoft | 全部 Proxy |
+| APNS / Apple | Apple / Apple | APNS / Apple |
+| PayPal / 银行 / Telegram | PayPal / USBank / Proxy | Paypal / USBank / Proxy |
+| 兜底 | 80、443、22 → Final，其余 DIRECT | Proxy，保留 dns-failed |
+
+分类覆盖统一，不强行统一两端策略或 Wi-Fi 行为。Claude 在 AI 之前；Netflix / YouTube 在 GlobalMedia 之前；媒体在 Google / Apple 之前；OneDrive / GitHub 在微软之前；APNS 在 Apple 之前。这些顺序均有自动测试。Clash 保留中国 IP 规则可触发解析的语义；Surge 的 IP 规则条目保留 no-resolve，因此两端不能宣称所有解析行为完全相同。
+
+完整 Surge 配置中的家庭 Wi-Fi 例外仍应放在银行 / APNS 后、其他业务前；公司 Wi-Fi 例外仍在 Claude / AI / PayPal 后、媒体等通用规则前。具体 SSID 不进入本仓库。Clash 的 QUIC 策略、个人例外及 DNS 继续由私有完整配置管理。
+
+Clash provider 缓存使用 `./providers/proxy-rules/`，避免迁移后复用旧娱乐分类缓存。两份公开配置在测试时临时配上仅指向 DIRECT 的占位策略组，再执行原生语法校验；不会连接真实代理或重载用户配置。Linux CI 校验 Mihomo，Surge 校验需在安装 Surge 的 macOS 本地执行。
 
 例如 Netflix：
 
