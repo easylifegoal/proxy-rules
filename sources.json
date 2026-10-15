@@ -10,7 +10,7 @@
     {"name": "fakeipfilter_domain", "behavior": "domain", "upstream": "fakeip", "path": "fakeip-filter.mrs", "minimum_entries": 60, "surge": false},
     {"name": "private_domain", "behavior": "domain", "upstream": "metacubex", "path": "geo/geosite/private.mrs", "minimum_entries": 50},
     {"name": "ai", "behavior": "domain", "upstream": "metacubex", "path": "geo/geosite/category-ai-!cn.mrs", "minimum_entries": 90},
-    {"name": "claude_domain", "behavior": "domain", "upstream": "metacubex", "path": "geo/geosite/anthropic.mrs", "minimum_entries": 7},
+    {"name": "claude_domain", "behavior": "classical", "input_behavior": "domain", "input_format": "mrs", "cache_tag": "classical-v1", "upstream": "metacubex", "path": "geo/geosite/anthropic.mrs", "minimum_entries": 7},
     {"name": "github_domain", "behavior": "domain", "upstream": "metacubex", "path": "geo/geosite/github.mrs", "minimum_entries": 30},
     {"name": "telegram_domain", "behavior": "domain", "upstream": "metacubex", "path": "geo/geosite/telegram.mrs", "minimum_entries": 10},
     {"name": "global_media_domain", "behavior": "domain", "minimum_entries": 350, "inputs": [

@@ -1,4 +1,47 @@
 {
+  "classical_extensions": [
+    {
+      "complete_classical_entries": 13,
+      "extra_rules": [
+        "DOMAIN-KEYWORD,anthropic",
+        "DOMAIN-KEYWORD,claude",
+        "DOMAIN-SUFFIX,claude-api.com",
+        "DOMAIN-SUFFIX,claudecontentmoderation.com"
+      ],
+      "name": "claude_domain",
+      "samples": [
+        {
+          "domain": "claude-api.com",
+          "matched": true
+        },
+        {
+          "domain": "api.claude-api.com",
+          "matched": true
+        },
+        {
+          "domain": "claudecontentmoderation.com",
+          "matched": true
+        },
+        {
+          "domain": "thirdparty-claude.example",
+          "matched": true
+        },
+        {
+          "domain": "anthropic-proxy.example",
+          "matched": true
+        },
+        {
+          "domain": "clau.de",
+          "matched": true
+        },
+        {
+          "domain": "unrelated.example",
+          "matched": false
+        }
+      ],
+      "upstream_domain_entries": 9
+    }
+  ],
   "disjoint": [
     {
       "left": "global_media_domain",
@@ -868,7 +911,7 @@
     }
   ],
   "schema_version": 1,
-  "scope": "domain categories only, not live client routing",
+  "scope": "domain categories; converted classical sets use upstream-only baselines; broad extensions audited separately",
   "subsets": [
     {
       "checked_entries": 9,
@@ -885,5 +928,8 @@
       "child": "youtube_domain",
       "parent": "global_media_domain"
     }
+  ],
+  "upstream_only_domain_baselines": [
+    "claude_domain"
   ]
 }

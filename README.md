@@ -25,7 +25,8 @@
 | 规则 | 来源 |
 | --- | --- |
 | AI、GitHub、Telegram、Netflix、PayPal、OneDrive、微软、Google、Apple、私有域名、国内域名、国外域名 | MetaCubeX `meta/geo/geosite` |
-| `claude_domain` / `youtube_domain` | MetaCubeX `anthropic.mrs` / `youtube.mrs`，可单独路由；仍分别属于 AI / GlobalMedia 大集合 |
+| `claude_domain` | MetaCubeX `anthropic.mrs` 解码后合并 `custom/overrides.json` 的四条宽匹配规则，发布完整 classical YAML / Surge；仅上游基线属于 AI 子集 |
+| `youtube_domain` | MetaCubeX `youtube.mrs`，可单独路由，属于 GlobalMedia 大集合 |
 | `global_media_domain` | 在 `sources.json` 明确列出 20 个影音服务，同一 MetaCubeX 快照聚合；**不再使用 category-entertainment**，不引入游戏、小说或 AI 大分类；Disney+ 使用审核过的精确条目白名单 |
 | 私有、中国、Telegram、Netflix IP | MetaCubeX `meta/geo/geoip` |
 | Apple IP | MetaCubeX `meta/geo-lite/geoip/apple.mrs`，保留原来的 lite 来源 |
@@ -40,9 +41,9 @@
 
 | 路径 | 用途 |
 | --- | --- |
-| `Clash/<名称>.mrs` | Mihomo，`format: mrs`；`behavior` 对应 domain 或 ipcidr；**APNS 不生成 MRS** |
-| `Clash/<名称>.yaml` | 可读 YAML，通常为 domain/ipcidr；**银行与 APNS 使用 classical 格式** |
-| `Text/<名称>.list` | 可读规范化数据；域名/IP 清单不能直接当作 Surge RULE-SET，APNS 为 classical 规则 |
+| `Clash/<名称>.mrs` | Mihomo，`format: mrs`；`behavior` 对应 domain 或 ipcidr；**Claude / APNS 不生成 MRS** |
+| `Clash/<名称>.yaml` | 可读 YAML，通常为 domain/ipcidr；**银行、Claude 与 APNS 使用 classical 格式** |
+| `Text/<名称>.list` | 可读规范化数据；域名/IP 清单不能直接当作 Surge RULE-SET，Claude / APNS 为 classical 规则 |
 | `Surge/<名称>.list` | Surge RULE-SET，不包含策略名称；IP 规则带 no-resolve |
 | `Sources/*` | 未修改的上游 MRS / classical 原文，以及规范化文本，用于审核与重新生成 |
 | `metadata/sync-state.json` | 最后一次发布使用的源版本、哈希及条数，不是最近一次检查时间 |
@@ -52,7 +53,7 @@
 
 ### 两端规则配置
 
-- [Clash 规则配置](Profiles/Clash.rules.yaml)：23 个 provider，22 组共享路由规则；Fake-IP 只供现有 DNS 配置引用。APNS 使用 YAML，其余使用 MRS。
+- [Clash 规则配置](Profiles/Clash.rules.yaml)：23 个 provider，22 组共享路由规则；Fake-IP 只供现有 DNS 配置引用。Claude / APNS 使用 YAML，其余使用 MRS。
 - [Surge 规则配置](Profiles/Surge.rules.conf)：同样的 22 组路由名单，使用 Surge 文本规则。
 
 两份都**不是独立可连接的完整配置**，不含节点、策略组定义、私人域名例外、内网 IP、SSID、DNS 或控制器凭据。合并时保留这些本地内容，不能直接覆盖完整文件。`custom/client-routing.json` 维护策略映射与顺序，每次构建自动生成；无需手改输出。
@@ -69,9 +70,11 @@
 
 分类覆盖统一，不强行统一两端策略或 Wi-Fi 行为。Claude 在 AI 之前；Netflix / YouTube 在 GlobalMedia 之前；媒体在 Google / Apple 之前；OneDrive / GitHub 在微软之前；APNS 在 Apple 之前。这些顺序均有自动测试。Clash 保留中国 IP 规则可触发解析的语义；Surge 的 IP 规则条目保留 no-resolve，因此两端不能宣称所有解析行为完全相同。
 
-Claude 另有用户明确要求保留的四条宽匹配规则：`claude-api.com` / `claudecontentmoderation.com` 域名后缀，以及 `claude` / `anthropic` 关键词，均指向 `Claude`，放在 Claude 上游集合和通用 AI / 媒体 / 地理分类之前。它们由 `custom/client-routing.json` 的 `claude_guards` 同时生成到两端主配置片段，并有防漏测验。关键词会匹配任何含该词的域名，包括第三方站点；这是主动选择的更宽路由范围，不是官方域名归属认证，也不能识别域名不含这些词的所有相关服务。关键词不支持 MRS，因此保留为主配置规则，不混入 `claude_domain.mrs`。本仓库分类互斥 / 子集检查针对上游域名集合，不代表宽匹配例外与其他业务绝不重叠。
+Claude 已统一为一个完整规则集：上游域名名单，加上 `claude-api.com` / `claudecontentmoderation.com` 域名后缀和 `claude` / `anthropic` 关键词。补充项仅在 `custom/overrides.json` 的 `claude_domain.add` 中维护，每次更新重新合并；不再在主配置重复写四条。两端集合内部不带策略名称，由主配置的 RULE-SET 指向 Claude 策略。关键词会匹配含该词的第三方域名，这是主动选择的更宽路由范围，不是官方归属认证，也不能识别名称不含这些词的所有相关服务。
 
-完整 Surge 配置中的家庭 Wi-Fi 直连例外应放在银行 / APNS、Claude 四条宽匹配规则及 `claude_domain` 规则集之后，确保 Claude 在家庭 Wi-Fi 下也优先走 Claude 策略；公开片段已标明插入位置。公司 Wi-Fi 例外仍在 Claude / AI / PayPal 后、媒体等通用规则前。具体 SSID 不进入本仓库。此处只改变 Claude 与家庭 Wi-Fi 的先后关系，IP 查询等其他个人例外仍保留原来的顺序。Clash 的 QUIC 策略、个人例外及 DNS 继续由私有完整配置管理。
+Clash 的 `claude_domain` 必须使用 `behavior: classical`、`format: yaml`；旧 `Clash/claude_domain.mrs` 已停止生成并移除，历史版本可从 Git 恢复。Surge 继续使用 `Surge/claude_domain.list`。两端订阅增加 `?v=classical-v1`，Clash 的缓存路径改为 `.yaml`，避免迁移时继续读取旧的仅域名缓存；URL 仍跟随 main 更新，不锁死到某个提交。必须一起切换 provider 的格式、URL、缓存路径，再移除主配置里的重复四条；不能拿 classical YAML 配 domain behavior。
+
+完整 Surge 配置中的家庭 Wi-Fi 直连例外应放在银行 / APNS 和合并后的 `claude_domain` 规则集之后，确保 Claude 在家庭 Wi-Fi 下也优先走 Claude 策略；公开片段已标明插入位置。公司 Wi-Fi 例外仍在 Claude / AI / PayPal 后、媒体等通用规则前。具体 SSID 不进入本仓库。IP 查询等其他个人例外仍保留原来的顺序。Clash 的 QUIC 策略、个人例外及 DNS 继续由私有完整配置管理。
 
 Clash provider 缓存使用 `./providers/proxy-rules/`，避免迁移后复用旧娱乐分类缓存。两份公开配置在测试时临时配上仅指向 DIRECT 的占位策略组，再执行原生语法校验；不会连接真实代理或重载用户配置。Linux CI 校验 Mihomo，Surge 校验需在安装 Surge 的 macOS 本地执行。
 
@@ -86,17 +89,17 @@ Clash provider 缓存使用 `./providers/proxy-rules/`，避免迁移后复用�
 
 需要参考长期业务分类的先后关系时，使用 [Clash 业务顺序片段](examples/business-rules-clash.yaml) / [Surge 业务顺序片段](examples/business-rules-surge.conf)。两份由同一份分类约束生成，只含业务域名规则，不能替换完整配置；策略占位符需映射到各自已有策略。
 
-MRS 示例是 **MRS 优先**，其中 APNS 自动使用 `behavior: classical`、`format: yaml`。MRS 不支持关键词规则，不能把 APNS 的域名/IP 部分单独转成 MRS 就声称完整等价。APNS 的 YAML 与 Surge 文件包含同一套规则。
+MRS 示例是 **MRS 优先**，其中 Claude / APNS 自动使用 `behavior: classical`、`format: yaml`。MRS 不支持关键词规则，不能生成部分 MRS 却声称完整等价。两者的 YAML 与 Surge 文件分别包含同一套完整规则。
 
 `fakeipfilter_domain` 是 Mihomo 的 **DNS Fake-IP 排除名单**，不是路由策略，因此不生成 Surge 路由文件。它包含 Mihomo 的单层通配符，不能直接换成 Surge 的跨层通配符；其余规则若将来出现不能等价转换的模式，构建会停止，绝不静默扩大匹配范围。
 
 MetaCubeX 跨格式生成以当前 **MRS 实际包含的规则**为基准。其他旧 classical 名单中的正则、关键词、进程、User-Agent 和 ASN 规则不会自动合并；这不是旧 Surge 名单的逐条镜像，差异详见对比文档。未做自定义修改的 MRS 会原样发布，不重新压缩替换。
 
-APNS 是显式的 classical 例外。目前仅接受两端共有的 `DOMAIN`、`DOMAIN-SUFFIX`、`DOMAIN-KEYWORD`、`IP-CIDR`、`IP-CIDR6` 及 IP 的 `no-resolve`。遇到新增的未知类型、选项或夹带策略名会阻止发布，不能静默丢弃。
+Claude / APNS 是显式的 classical 例外。目前仅接受两端共有的 `DOMAIN`、`DOMAIN-SUFFIX`、`DOMAIN-KEYWORD`、`IP-CIDR`、`IP-CIDR6` 及 IP 的 `no-resolve`。遇到新增的未知类型、选项或夹带策略名会阻止发布，不能静默丢弃。
 
 GlobalMedia 聚合时保留每个组件的原始 MRS、解码文本、SHA 与条数。每个组件分别执行格式和数量检查，避免一个服务丢失被其他服务新增掩盖。服务清单不会随娱乐大分类自动扩张。Disney+ 白名单中若有条目从上游消失，构建报错；新增条目需要审核后补入。
 
-`custom/classification.json` 定义分类约束：媒体与 Claude / AI 不得交叉（包括父后缀覆盖）；Claude 必须属于 AI，Netflix / YouTube 必须属于媒体集合。合理的 Google / Apple 等交叉被记录并检查建议优先级。分类失败与数量异常分开，`--allow-large-change` **不能跳过分类检查**。
+`custom/classification.json` 定义域名分类约束：媒体与 Claude 上游基线 / AI 不得交叉（包括父后缀覆盖）；Claude 上游基线必须属于 AI，Netflix / YouTube 必须属于媒体集合。合并后的 Claude 宽匹配范围不再声称是 AI 子集或与其他业务互斥：`scripts/rule_audit.py` 单独检查完整集合保留全部上游条目及四条必需补充项，并验证关键词匹配。报告显式记录上游基线与完整 classical 扩展，避免用基线检查冒充完整集合检查。合理的公司分类交叉仍检查建议优先级。`--allow-large-change` **不能跳过分类或补充项防漏检查**。
 
 ### 如何维护
 
@@ -108,7 +111,7 @@ GlobalMedia 聚合时保留每个组件的原始 MRS、解码文本、SHA 与条
    {"netflix_domain": {"add": ["+.example.com"], "remove": []}}
    ```
 
-   上述只是语法示例，不表示 example.com 属于 Netflix。`remove` 是对 `Sources/<名称>.txt` 中条目的**精确删除**，不是排除任意子域名：若祖先后缀或更大 IP 网段仍在，访问仍可能匹配。需要例外路由时优先在主配置前面加规则。删除不存在的条目会报错，防止过期的自定义项被静默忽略。
+   上述只是语法示例，不表示 example.com 属于 Netflix。普通集合的 `remove` 是对 `Sources/<名称>.txt` 条目的精确删除；Claude 先转换为 classical，再按 `DOMAIN-SUFFIX,...` 等完整条目处理增删。删除条目不等于排除其子域名，父后缀或关键词仍可能匹配。Claude 的必需补充项和上游条目有独立防漏检查，需要明确审核才能删改。删除不存在的条目会报错。
 
 4. 维护媒体服务：编辑 `global_media_domain.inputs`。每项必须指定原始路径和最低条数；`select` 为可选的精确条目白名单，未列入的条目不会自动导入。不要用整份娱乐、公司或云厂商集合代替服务列表。
 5. 增加边界/回归检查：编辑 `custom/classification.json`，添加代表性域名、禁止匹配域名或分类关系。共享基础设施出现跨类时先审核，不自动删除整段 CDN。

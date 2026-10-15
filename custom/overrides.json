@@ -1,1 +1,10 @@
-{}
+{
+  "claude_domain": {
+    "add": [
+      "DOMAIN-SUFFIX,claude-api.com",
+      "DOMAIN-SUFFIX,claudecontentmoderation.com",
+      "DOMAIN-KEYWORD,anthropic",
+      "DOMAIN-KEYWORD,claude"
+    ]
+  }
+}

@@ -1,12 +1,12 @@
 # 长期分类方案
 
-目标：Clash / Mihomo 与 Surge 从同一数据构建规则，分类边界可解释、上游变化可审计。只统一规则内容与更新流程，不要求两端使用相同策略、Wi-Fi 行为或兜底。本轮没有修改任何客户端配置。
+目标：Clash / Mihomo 与 Surge 从同一数据构建规则，分类边界可解释、上游变化可审计。只统一规则内容与更新流程，不要求两端使用相同策略、Wi-Fi 行为或兜底。实际接入以私有客户端配置为准。
 
 ## 分类边界
 
 | 分类 | 来源 / 范围 | 关系与使用建议 |
 | --- | --- | --- |
-| Claude | MetaCubeX `anthropic`，包括 Claude、Anthropic API 和上游列出的专用 CDN 域名 | 单列 `claude_domain`；先于 AI 匹配 |
+| Claude | MetaCubeX `anthropic` 加 `custom/overrides.json` 中两条后缀、两条关键词 | 合并为 classical `claude_domain`；先于 AI 和 Wi-Fi 直连匹配；完整宽匹配范围不等于 AI 子集 |
 | AI | MetaCubeX `category-ai-!cn` | 保留完整 AI 总集合，包含 Claude 作为兜底；不能整段并入媒体 |
 | Netflix | 现有 MetaCubeX 域名和 IP 集合 | 需要独立策略时先于 GlobalMedia |
 | YouTube | 新增 MetaCubeX `youtube` | 可单独路由，也可直接指向现有 GlobalMedia 策略；不强制新增客户端策略组 |
@@ -77,8 +77,9 @@ IP 与域名文件分开发布。只有已明确维护的 Netflix、Telegram、A
 
 构建在发布前执行：
 
-- **互斥检查**：GlobalMedia 与 Claude、AI 不能有任何域名匹配范围交叉。不只比较字符串，还检查父后缀、子域名和根域名边界；例如错误加入 `+.com` 也会被发现。
-- **包含检查**：Claude 必须被 AI 覆盖；Netflix、YouTube 必须被 GlobalMedia 覆盖。上游分类拆分或漏收时及时失败。
+- **互斥检查**：GlobalMedia 与 Claude 上游域名基线、AI 不能有域名匹配范围交叉。不只比较字符串，还检查父后缀、子域名和根域名边界；例如错误加入 `+.com` 也会被发现。此项不对 Claude 的宽匹配补充规则宣称完全互斥。
+- **包含检查**：Claude 上游基线必须被 AI 覆盖；Netflix、YouTube 必须被 GlobalMedia 覆盖。上游分类拆分或漏收时及时失败。完整 Claude classical 集合不受这个子集假设约束。
+- **Claude 完整集合检查**：独立检查全部上游规则仍在，并强制保留两个域名后缀和 `claude` / `anthropic` 两个关键词；验证正反匹配样例。YAML / Surge 的完整条目集合必须一致，不能只检查上游基线。主配置仅留一个 RULE-SET 引用，位于 Wi-Fi 直连前；不发布不完整的 Claude MRS。
 - **优先级检查**：记录 Google / AI、Google / YouTube、Apple / 媒体等合理交叉，验证参考小类先于大类。
 - **域名回归检查**：验证 Claude、Gemini、Copilot、YouTube、Apple TV+、银行等典型域名；反向验证 Steam、小说、Disney 乐园和通用 CDN 随机子域不应命中媒体。
 - **每组件检查**：每份服务源都必须可下载、可解码、满足最低条数和数量变化阈值。不会忽略下载失败的某个服务后继续发布残缺聚合。
@@ -94,6 +95,6 @@ IP 与域名文件分开发布。只有已明确维护的 Netflix、Telegram、A
 2. 修改例外：用 `custom/overrides.json` 做明确、可追踪的条目调整；删除一个条目不代表排除其父后缀的覆盖，分类检查会继续验证。
 3. 新增样例：同步更新 `custom/classification.json`，把“这条不应再错分”的期望写成可执行检查。
 4. 更新发布：继续每天 UTC+8 09:17 拉取固定上游快照，验证后生成 MRS / YAML / Surge LIST；失败保留上一版。
-5. 将来接入客户端：先备份，保留各自策略和 Wi-Fi / 兜底，再替换对应规则订阅及检查业务规则顺序。此步骤尚未执行。
+5. 接入客户端：先备份，保留各自策略和 Wi-Fi / 兜底，再替换对应规则订阅及检查业务规则顺序。Claude 改用 classical YAML / Surge LIST，更新 URL 与缓存路径后再移除主配置里的重复补充规则。
 
 所有服务组件的原始文件保存在 `Sources/global_media_domain/`，精确来源 SHA、哈希、条数与筛选范围保存在 `metadata/sync-state.json`。旧 `category-entertainment` 原始文件已不再作为当前输入，历史版本可从 Git 恢复。

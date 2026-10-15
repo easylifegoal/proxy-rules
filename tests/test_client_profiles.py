@@ -18,8 +18,8 @@ class ClientProfileTests(unittest.TestCase):
         clash, surge = build_profiles(self.manifest, self.routing, self.contract)
         self.assertEqual(set(clash), {"rules", "rule-providers"})
         self.assertEqual(len(clash["rule-providers"]), 23)
-        self.assertEqual(len(clash["rules"]), 30)
-        self.assertEqual(len(surge), 28)
+        self.assertEqual(len(clash["rules"]), 26)
+        self.assertEqual(len(surge), 24)
         for provider in clash["rule-providers"].values():
             self.assertTrue(provider["url"].startswith(
                 "https://raw.githubusercontent.com/easylifegoal/proxy-rules/main/Clash/"))
@@ -49,44 +49,35 @@ class ClientProfileTests(unittest.TestCase):
         self.assertIn("RULE-SET,private_ip,DIRECT,no-resolve", clash["rules"])
         self.assertIn("RULE-SET,cn_ip,DIRECT", clash["rules"])
 
-    def test_claude_guards_exist_once_before_canonical_and_generic_sets(self):
+    def test_merged_claude_set_precedes_generic_sets_without_inline_duplicates(self):
         clash, surge = build_profiles(self.manifest, self.routing, self.contract)
-        expected = ["DOMAIN-SUFFIX,claude-api.com,Claude",
-                    "DOMAIN-SUFFIX,claudecontentmoderation.com,Claude",
-                    "DOMAIN-KEYWORD,anthropic,Claude", "DOMAIN-KEYWORD,claude,Claude"]
         for rules in (clash["rules"], surge):
-            for guard in expected:
-                self.assertEqual(rules.count(guard), 1)
-                for name in ("claude_domain", "ai", "global_media_domain", "geolocation-!cn"):
-                    target = next(r for r in rules if r.startswith(f"RULE-SET,{name},")
-                                  or f"/Surge/{name}.list," in r)
-                    self.assertLess(rules.index(guard), rules.index(target))
+            claude = next(r for r in rules if r.startswith("RULE-SET,claude_domain,")
+                          or "/Surge/claude_domain.list?" in r)
+            self.assertEqual(rules.count(claude), 1)
+            self.assertFalse(any(r.startswith(("DOMAIN-SUFFIX,claude", "DOMAIN-KEYWORD,")) for r in rules))
+            for name in ("ai", "global_media_domain", "geolocation-!cn"):
+                target = next(r for r in rules if r.startswith(f"RULE-SET,{name},")
+                              or f"/Surge/{name}.list," in r)
+                self.assertLess(rules.index(claude), rules.index(target))
 
-    def test_claude_guards_cannot_be_removed_or_redirected_silently(self):
-        for index in range(4):
-            routing = json.loads(json.dumps(self.routing))
-            routing["claude_guards"].pop(index)
-            with self.assertRaisesRegex(ValueError, "Claude guard"):
-                validate_routing(self.manifest, routing, self.contract)
+    def test_claude_set_cannot_be_redirected_silently(self):
         for client in ("clash", "surge"):
             routing = json.loads(json.dumps(self.routing))
             next(r for r in routing[client]["routes"] if r[0] == "claude_domain")[1] = "Proxy"
             with self.assertRaisesRegex(ValueError, "Claude guards"):
                 validate_routing(self.manifest, routing, self.contract)
 
-    def test_claude_keyword_matching_is_intentionally_broad(self):
+    def test_claude_urls_bypass_old_domain_only_cache(self):
         clash, surge = build_profiles(self.manifest, self.routing, self.contract)
-        for rules in (clash["rules"], surge):
-            guards = [r.split(",") for r in rules if r.startswith("DOMAIN-KEYWORD,")]
-            for domain in ("api.claude-api.com", "claudecontentmoderation.com",
-                           "thirdparty-claude.example", "anthropic-proxy.example"):
-                self.assertTrue(any(word in domain and policy == "Claude" for _, word, policy in guards))
-            self.assertFalse(any(word in "unrelated.example" for _, word, _ in guards))
+        self.assertTrue(clash["rule-providers"]["claude_domain"]["url"].endswith("/claude_domain.yaml?v=classical-v1"))
+        self.assertTrue(clash["rule-providers"]["claude_domain"]["path"].endswith("/claude_domain.yaml"))
+        self.assertTrue(any("/claude_domain.list?v=classical-v1,Claude" in r for r in surge))
 
-    def test_keywords_are_profile_rules_not_mrs_provider_content(self):
+    def test_claude_uses_classical_yaml_not_partial_mrs(self):
         clash, _ = build_profiles(self.manifest, self.routing, self.contract)
-        self.assertEqual(clash["rule-providers"]["claude_domain"]["behavior"], "domain")
-        self.assertEqual(clash["rule-providers"]["claude_domain"]["format"], "mrs")
+        self.assertEqual(clash["rule-providers"]["claude_domain"]["behavior"], "classical")
+        self.assertEqual(clash["rule-providers"]["claude_domain"]["format"], "yaml")
         self.assertEqual(len(clash["rule-providers"]), 23)
 
     def test_all_priority_pairs_are_enforced_in_both_clients(self):
@@ -135,9 +126,7 @@ class ClientProfileTests(unittest.TestCase):
         surge = render_profiles(self.manifest, self.routing, self.contract)["Profiles/Surge.rules.conf"].decode()
         marker = "# Insert local home Wi-Fi DIRECT exceptions here, AFTER all Claude rules."
         self.assertEqual(surge.count(marker), 1)
-        for guard in self.routing["claude_guards"]:
-            self.assertLess(surge.index(guard + ",Claude"), surge.index(marker))
-        self.assertLess(surge.index("/Surge/claude_domain.list,Claude"), surge.index(marker))
+        self.assertLess(surge.index("/Surge/claude_domain.list?v=classical-v1,Claude"), surge.index(marker))
         self.assertLess(surge.index(marker), surge.index("/Surge/paypal_domain.list,Paypal"))
 
 

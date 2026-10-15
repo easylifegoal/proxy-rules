@@ -34,6 +34,11 @@ original data license or imply a new license grant.
 The APNS classical set is kept intact across YAML and Surge outputs; no partial
 MRS representation is published. The source-comparison document cites additional
 legacy rule sources for comparison only; it does not mirror those full datasets.
+Claude's upstream MRS remains unmodified under `Sources/`. Its published classical
+YAML and Surge sets merge the decoded upstream domains with explicit local suffix
+and keyword additions from `custom/overrides.json`. The broad keywords express a
+routing preference, not certification of domain ownership. No partial Claude MRS
+output is published; the previous output remains recoverable in Git history.
 
 The bank rules predate this synchronization workflow. Their initial community
 source, scope and limitations remain documented in the README; no additional

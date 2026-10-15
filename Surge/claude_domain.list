@@ -1,11 +1,15 @@
 # Generated claude_domain; edit sources.json/custom, not this file.
 # Provenance and license: ../metadata/sync-state.json, ../NOTICE.md
 DOMAIN,servd-anthropic-website.b-cdn.net
+DOMAIN-KEYWORD,anthropic
+DOMAIN-KEYWORD,claude
 DOMAIN-SUFFIX,anthropic.com
 DOMAIN-SUFFIX,clau.de
+DOMAIN-SUFFIX,claude-api.com
 DOMAIN-SUFFIX,claude.ai
 DOMAIN-SUFFIX,claude.com
 DOMAIN-SUFFIX,claude.dev
+DOMAIN-SUFFIX,claudecontentmoderation.com
 DOMAIN-SUFFIX,claudemcpclient.com
 DOMAIN-SUFFIX,claudemcpcontent.com
 DOMAIN-SUFFIX,claudeusercontent.com

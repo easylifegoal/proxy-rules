@@ -19,11 +19,11 @@ from urllib.parse import quote, urlparse
 from urllib.request import Request, urlopen
 
 if __package__:
-    from .classification import audit_classification
-    from .client_profiles import render_profiles
+    from .client_profiles import published_url, render_profiles
+    from .rule_audit import audit_rule_outputs
 else:
-    from classification import audit_classification
-    from client_profiles import render_profiles
+    from client_profiles import published_url, render_profiles
+    from rule_audit import audit_rule_outputs
 
 ROOT = Path(__file__).resolve().parents[1]
 MAX_DOWNLOAD = 20 * 1024 * 1024
@@ -85,9 +85,14 @@ def validate_manifest(manifest: dict) -> None:
             outputs.add(output)
         if rule["behavior"] not in ("domain", "ipcidr", "classical"):
             raise ValueError(f"Unsupported behavior: {name}")
-        input_format = rule.get("input_format", "classical" if rule["behavior"] == "classical" else "mrs")
-        if input_format not in ("mrs", "classical") or ((input_format == "classical") != (rule["behavior"] == "classical")):
+        input_behavior = rule.get("input_behavior", rule["behavior"])
+        input_format = rule.get("input_format", "classical" if input_behavior == "classical" else "mrs")
+        if input_format not in ("mrs", "classical") or input_behavior not in ("domain", "ipcidr", "classical") or ((input_format == "classical") != (input_behavior == "classical")):
             raise ValueError(f"Input format and behavior do not match: {name}")
+        if input_behavior != rule["behavior"] and not (input_behavior == "domain" and rule["behavior"] == "classical" and "upstream" in rule):
+            raise ValueError(f"Unsupported input/output behavior conversion: {name}")
+        if "cache_tag" in rule and not re.fullmatch(r"[A-Za-z0-9_-]+", rule["cache_tag"]):
+            raise ValueError(f"Invalid cache version: {name}")
         if sum(key in rule for key in ("local", "upstream", "inputs")) != 1:
             raise ValueError(f"Exactly one input required: {name}")
         if "local" in rule:
@@ -278,7 +283,7 @@ def yaml_payload(entries: list[str], header: str) -> bytes:
 
 
 def provider_format(rule: dict, preferred: str) -> tuple[str, str]:
-    # MRS cannot encode keywords. Never publish a partial APNS .mrs file.
+    # MRS cannot encode keywords. Never publish partial Claude/APNS MRS files.
     fmt = "yaml" if rule["behavior"] == "classical" else preferred
     behavior = "classical" if fmt == "yaml" and rule.get("classical_yaml") else rule["behavior"]
     return behavior, fmt
@@ -289,14 +294,14 @@ def render_examples(manifest: dict, contract: dict | None = None) -> dict[str, b
     result = {}
     for fmt in ("mrs", "yaml"):
         lines = ["# Provider-only fragment. Keep your existing rules, policies and DNS settings.",
-                 "# Classical sets (APNS) use YAML even in the MRS-preferred example.", "rule-providers:"]
+                 "# Classical sets (Claude/APNS) use YAML even in the MRS-preferred example.", "rule-providers:"]
         for rule in manifest["rules"]:
             out = rule.get("output", rule["name"])
             behavior, actual_format = provider_format(rule, fmt)
             lines.extend([
                 f"  {json.dumps(rule['name'])}:", "    type: http", f"    behavior: {behavior}",
                 f"    format: {actual_format}", "    interval: 86400",
-                f"    path: ./ruleset/{out}.{actual_format}", f"    url: {base}/Clash/{out}.{actual_format}",
+                f"    path: ./ruleset/{out}.{actual_format}", f"    url: {published_url(base, rule, 'Clash', actual_format)}",
             ])
         result[f"examples/rule-providers-{fmt}.yaml"] = ("\n".join(lines) + "\n").encode()
     lines = ["# Reference only: replace POLICY with your actual policy; order is NOT prescribed.",
@@ -304,7 +309,7 @@ def render_examples(manifest: dict, contract: dict | None = None) -> dict[str, b
     for rule in manifest["rules"]:
         if rule.get("surge", True):
             out = rule.get("output", rule["name"])
-            lines.append(f"RULE-SET,{base}/Surge/{out}.list,POLICY")
+            lines.append(f"RULE-SET,{published_url(base, rule, 'Surge', 'list')},POLICY")
     result["examples/surge-rules.conf"] = ("\n".join(lines) + "\n").encode()
     if contract:
         by_name = {r["name"]: r for r in manifest["rules"]}
@@ -315,7 +320,7 @@ def render_examples(manifest: dict, contract: dict | None = None) -> dict[str, b
         for name in contract["domain_priority"]:
             output = by_name[name].get("output", name)
             clash.append("  - " + json.dumps(f"RULE-SET,{name},POLICY_{name}"))
-            surge.append(f"RULE-SET,{base}/Surge/{output}.list,POLICY_{name}")
+            surge.append(f"RULE-SET,{published_url(base, by_name[name], 'Surge', 'list')},POLICY_{name}")
         result["examples/business-rules-clash.yaml"] = ("\n".join(clash) + "\n").encode()
         result["examples/business-rules-surge.conf"] = ("\n".join(surge) + "\n").encode()
     return result
@@ -324,6 +329,7 @@ def render_examples(manifest: dict, contract: dict | None = None) -> dict[str, b
 def build_rule(rule: dict, data: bytes | dict[str, bytes] | None, snapshots: dict, overrides: dict,
                old: dict, mihomo: Path, root: Path, allow_large_change: bool) -> tuple[dict, dict]:
     name, behavior = rule["name"], rule["behavior"]
+    input_behavior = rule.get("input_behavior", behavior)
     artifacts, components = {}, {}
     with tempfile.TemporaryDirectory(prefix="proxy-rule-") as directory:
         work = Path(directory)
@@ -355,14 +361,14 @@ def build_rule(rule: dict, data: bytes | dict[str, bytes] | None, snapshots: dic
             # Stable digest of all component bytes; full provenance is recorded separately.
             input_hash = digest(json_bytes({k: digest(v) for k, v in sorted(data.items())}))
         elif data is not None:
-            if behavior == "classical":
+            if input_behavior == "classical":
                 entries = parse_classical(data.decode("utf-8-sig"))
                 artifacts[f"Sources/{name}.list"] = data
             else:
                 incoming, decoded = work / "upstream.mrs", work / "upstream.txt"
                 incoming.write_bytes(data)
-                convert(mihomo, behavior, "mrs", incoming, decoded)
-                entries = parse_entries(decoded.read_text(), behavior)
+                convert(mihomo, input_behavior, "mrs", incoming, decoded)
+                entries = parse_entries(decoded.read_text(), input_behavior)
                 artifacts[f"Sources/{name}.mrs"] = data
             origin = source_url(rule, snapshots)
             input_hash = digest(data)
@@ -374,6 +380,8 @@ def build_rule(rule: dict, data: bytes | dict[str, bytes] | None, snapshots: dic
         check_count(name, len(entries), rule["minimum_entries"], old.get("upstream_entries"), allow_large_change)
         upstream_entries = entries
         artifacts[f"Sources/{name}.txt"] = ("\n".join(entries) + "\n").encode()
+        if behavior == "classical" and input_behavior != behavior:
+            entries = parse_classical("\n".join(surge_rules(entries, input_behavior)))
         entries = apply_overrides(entries, overrides.get(name, {}), behavior)
         if behavior == "classical":
             check_count(name + " output", len(entries), rule["minimum_entries"], old.get("output_entries"), allow_large_change)
@@ -391,6 +399,9 @@ def build_rule(rule: dict, data: bytes | dict[str, bytes] | None, snapshots: dic
                 "mrs_sha256": None, "upstream_mrs_preserved": False,
                 "surge_exported": rule.get("surge", True),
             }
+            if input_behavior != behavior:
+                record["input_behavior"] = input_behavior
+                record["custom_additions"] = overrides.get(name, {}).get("add", [])
             print(f"{name}: {len(upstream_entries)} source -> {len(entries)} classical entries; YAML/Surge only", flush=True)
             return artifacts, record
         initial = work / "canonical.txt"
@@ -515,9 +526,7 @@ def main():
         artifacts.update(outputs)
         records[rule["name"]] = record
     contract = json.loads((ROOT / "custom/classification.json").read_text())
-    domain_sets = {r["name"]: artifacts[f"Text/{r.get('output', r['name'])}.list"].decode().splitlines()
-                   for r in manifest["rules"] if r["behavior"] == "domain" and r.get("surge", True)}
-    artifacts["metadata/classification-audit.json"] = json_bytes(audit_classification(domain_sets, contract))
+    artifacts["metadata/classification-audit.json"] = json_bytes(audit_rule_outputs(manifest, artifacts, contract))
     artifacts.update(render_examples(manifest, contract))
     routing = json.loads((ROOT / "custom/client-routing.json").read_text())
     artifacts.update(render_profiles(manifest, routing, contract))

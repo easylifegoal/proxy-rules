@@ -10,8 +10,7 @@
     "Clash/apple_domain.yaml": "59cbf273aeb9f4fd357663c345e1e0b153f0d7495f96c26236eaf9b34d1d69c6",
     "Clash/apple_ip.mrs": "9c3ac6e550ff760e7af78040ceac1711e4b6173876069926e40a492ad1683cb5",
     "Clash/apple_ip.yaml": "d1eb5839bcb229e06fb699cc6c0d0ac845fe50ad31f55bb559249b3ca6821c14",
-    "Clash/claude_domain.mrs": "e322837df9aaa9321a507d737ebeaae36376408326cd7af593a2316e99e5a15c",
-    "Clash/claude_domain.yaml": "28b581281aa8735fc9585ec999a00e9f8483d21a4041a1cddef50a8d4e1f7fb8",
+    "Clash/claude_domain.yaml": "c43ace605acf5b9bc914ec405a4c05c1e32e58ba845e63f5ef879a02c9e666f1",
     "Clash/cn_domain.mrs": "701e8a630d959e99b28baab9b855559126463ce1a989dc30f21257ad3f35fb31",
     "Clash/cn_domain.yaml": "4a0d583c8c6de5fac612df741224e942afe6fff4ea77ffb66802b3cde8e20da2",
     "Clash/cn_ip.mrs": "7b4117f9e60b4609b26f2d81544d2bc7891153bcd42a013f12afece11c9dfb88",
@@ -48,8 +47,8 @@
     "Clash/usbank.yaml": "f8e63d85c67a7d333c37c095c522524a52ca8ba9d465bd936c2b47c1e5b44772",
     "Clash/youtube_domain.mrs": "e212b2ce9f39b30f4e2ab57da9ed0937673606bc56bb46e5d55ad7dd9af00aef",
     "Clash/youtube_domain.yaml": "625cbeba565bf7dbc27a95903201ef13f252c73081feaca5ddd32d0bca79206b",
-    "Profiles/Clash.rules.yaml": "bcc7349e8aa7be7add6aca9300487c9dffb3525b0b7b3d79ec0604e30c665bc0",
-    "Profiles/Surge.rules.conf": "0e3692545c0ef6d814b245e0a0cf778755d676b40643a8b4be497ba49bf18f80",
+    "Profiles/Clash.rules.yaml": "a7192b8b15e581561b788b0d28024679a6f735ba974b3c702f6d992d5c2b84f9",
+    "Profiles/Surge.rules.conf": "47c031895f8f650017072f0e768525388f8efafd2b43b485fb4e66752db38cd6",
     "Sources/ai.mrs": "0061a27e834fae935790595713e7710c85a3072d28f87c0ad1acc59b244b2440",
     "Sources/ai.txt": "b5b6342dee1bcd2cbb775c0bef1670b910555e68246b5ceaa5f166dfd76f2f12",
     "Sources/apns.list": "c94c5537b667b75eea429c30f5587a7577127405891a96bbd58fad1f0f3a0a97",
@@ -139,7 +138,7 @@
     "Surge/apns.list": "7334942aa1ed55b742ec7f0458a1f2789eacedf2c14a0e403d08249a84b3f74c",
     "Surge/apple_domain.list": "305c7620d3cd37144d0a8e2eb8ceb8b028eb12ec6ce933a1cf921a3fdba586b6",
     "Surge/apple_ip.list": "667314dc88fcf3a7f533e4daf073737304c81b1b458c0e3d561eb29b60ffe78d",
-    "Surge/claude_domain.list": "d0152569c2183f8005963dcd4c2bbc66a24563a74f51e5090d1be07044fcf5dc",
+    "Surge/claude_domain.list": "0984ef394f60a1f9b5f48a150d09abc02a136f6d9a6540932d19f58e420852dc",
     "Surge/cn_domain.list": "5c5ba8c8a2bb1de794ba1df3b8961937cc2efa7aec2d2841392422eb8d045b9b",
     "Surge/cn_ip.list": "a1b035c2e86fd7b04b8c265f20dee5f8c05abf483f46c58138f963b8d9a91154",
     "Surge/geolocation-!cn.list": "8723e2da3b219bddf0bb0f1d33aa9cff33f70aa9d1640a54fd1e63f03a8d13d0",
@@ -162,7 +161,7 @@
     "Text/apns.list": "f39b207cf877d6e705c1538d25431fd41c6798d47c8ee6ce7b355864905aabf2",
     "Text/apple_domain.list": "9179e0cb9fbdbc1b8f4cfd016f14cc9e30f98d698b26cc7b2f700aff2cc16d99",
     "Text/apple_ip.list": "dbdd65c2e3d83fceda19c8d6d6c9146fa875adba268880b21db418f12a3d6c04",
-    "Text/claude_domain.list": "4b140886d0dfc67fff13066295cbe58143499b51cffe3cb34662a971867fb0e2",
+    "Text/claude_domain.list": "bb19a5e3afe814ee08f988f186b12f4e73b7940f87b6bc91e5fa38191333d48a",
     "Text/cn_domain.list": "f82b4c4e57d240d4d172a1d7b8b1ef873b2b4dcdb6e44a1cb9279a3703e591cd",
     "Text/cn_ip.list": "85c01308c08d77c7d9b5942bd5f26ccfe2b7c8be9da298d458555c9b97ee07d9",
     "Text/fakeipfilter_domain.list": "bdec4622b2c698962b19794806d66685e70d2a040ec723a64966368998cd4ae9",
@@ -182,11 +181,11 @@
     "Text/usbank.list": "60812748d44ad1f7aca5dd3fe2001161431a171ba5df4d215a245a2f78afca83",
     "Text/youtube_domain.list": "c20c54d2acd671a7000adbaf16cfe4c7027c19d2947365f79f0d5a7de3d922ee",
     "examples/business-rules-clash.yaml": "62f165d6082545c3efe24aa89323a854b10adf157ae5a80e91c3c1ba14427f51",
-    "examples/business-rules-surge.conf": "e146f0a09e92ea54b33718bcfe4a267389eeefad207da1618ecc3919ae9c9920",
-    "examples/rule-providers-mrs.yaml": "2c04ff09aa3ac511376f052c951444c77953e0874ae0eb5b144ff5e36abc0d06",
-    "examples/rule-providers-yaml.yaml": "98a295792e07c816269f3b78a86ee072ad5ae8bf914142f94da8566489b95a14",
-    "examples/surge-rules.conf": "b873d5e08413647969e3e1b7e5e4917d1ffe23de72f550bc9ffa8ffcbe26c09e",
-    "metadata/classification-audit.json": "ee3addcebbeaff7c22e467debb42f61caf44c742f76a64b99909821ac9f24beb"
+    "examples/business-rules-surge.conf": "577a7fc92a26999b49f39c8578851fa1be4d26c50f89ad6861a80704fbb934da",
+    "examples/rule-providers-mrs.yaml": "ef255983efdeea9a3e9f03afc7ffd9cc6517731cf576eeb1902e28f946ed1db5",
+    "examples/rule-providers-yaml.yaml": "d20ff13a91dd76c5c0c2c4917b39d8b3c93dda6e2f2d9b1fc8ee92f033e30e60",
+    "examples/surge-rules.conf": "495f46aa2f3db30cc799f65d45775da0287325bdaab001bf69c4c76d8a3dfc8b",
+    "metadata/classification-audit.json": "3ffaa326851bcfe9f543ce396724af3159a2aabfcaa486a5d30bc4e9c18f840d"
   },
   "rules": {
     "ai": {
@@ -230,13 +229,20 @@
       "upstream_sha256": "9c3ac6e550ff760e7af78040ceac1711e4b6173876069926e40a492ad1683cb5"
     },
     "claude_domain": {
-      "behavior": "domain",
-      "mrs_sha256": "e322837df9aaa9321a507d737ebeaae36376408326cd7af593a2316e99e5a15c",
-      "output_entries": 9,
+      "behavior": "classical",
+      "custom_additions": [
+        "DOMAIN-SUFFIX,claude-api.com",
+        "DOMAIN-SUFFIX,claudecontentmoderation.com",
+        "DOMAIN-KEYWORD,anthropic",
+        "DOMAIN-KEYWORD,claude"
+      ],
+      "input_behavior": "domain",
+      "mrs_sha256": null,
+      "output_entries": 13,
       "source": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/361f2c8a60b704d12220d3b370ced151f89c678c/geo/geosite/anthropic.mrs",
       "surge_exported": true,
       "upstream_entries": 9,
-      "upstream_mrs_preserved": true,
+      "upstream_mrs_preserved": false,
       "upstream_sha256": "e322837df9aaa9321a507d737ebeaae36376408326cd7af593a2316e99e5a15c"
     },
     "cn_domain": {

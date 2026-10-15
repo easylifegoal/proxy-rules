@@ -1,5 +1,5 @@
 # Provider-only fragment. Keep your existing rules, policies and DNS settings.
-# Classical sets (APNS) use YAML even in the MRS-preferred example.
+# Classical sets (Claude/APNS) use YAML even in the MRS-preferred example.
 rule-providers:
   "fakeipfilter_domain":
     type: http
@@ -24,11 +24,11 @@ rule-providers:
     url: https://raw.githubusercontent.com/easylifegoal/proxy-rules/main/Clash/ai.mrs
   "claude_domain":
     type: http
-    behavior: domain
-    format: mrs
+    behavior: classical
+    format: yaml
     interval: 86400
-    path: ./ruleset/claude_domain.mrs
-    url: https://raw.githubusercontent.com/easylifegoal/proxy-rules/main/Clash/claude_domain.mrs
+    path: ./ruleset/claude_domain.yaml
+    url: https://raw.githubusercontent.com/easylifegoal/proxy-rules/main/Clash/claude_domain.yaml?v=classical-v1
   "github_domain":
     type: http
     behavior: domain

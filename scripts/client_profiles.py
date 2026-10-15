@@ -3,20 +3,15 @@
 import json
 import re
 
-CLAUDE_GUARDS = [
-    "DOMAIN-SUFFIX,claude-api.com",
-    "DOMAIN-SUFFIX,claudecontentmoderation.com",
-    "DOMAIN-KEYWORD,anthropic",
-    "DOMAIN-KEYWORD,claude",
-]
+def published_url(base, rule, client, fmt):
+    output = rule.get("output", rule["name"])
+    version = "?v=" + rule["cache_tag"] if rule.get("cache_tag") else ""
+    return f"{base}/{client}/{output}.{fmt}{version}"
 
 
 def validate_routing(manifest, routing, contract):
-    if set(routing) != {"schema_version", "claude_guards", "clash", "surge"} or routing["schema_version"] != 2:
+    if set(routing) != {"schema_version", "clash", "surge"} or routing["schema_version"] != 3:
         raise ValueError("Invalid client routing schema")
-    # Explicit user-requested broad matching; never silently remove it during source sync.
-    if routing["claude_guards"] != CLAUDE_GUARDS:
-        raise ValueError("Claude guard changes require explicit review")
     expected = {r["name"] for r in manifest["rules"] if r.get("surge", True)}
     broad = {"geolocation-!cn", "cn_domain", "cn_ip"}
     for client in ("clash", "surge"):
@@ -58,19 +53,14 @@ def build_profiles(manifest, routing, contract):
         providers[name] = {
             "type": "http", "behavior": rule["behavior"], "format": fmt, "interval": 86400,
             "path": f"./providers/proxy-rules/{output}.{fmt}",
-            "url": f"{base}/Clash/{output}.{fmt}",
+            "url": published_url(base, rule, "Clash", fmt),
         }
     clash_rules, surge_rules = [], []
     for name, policy in routing["clash"]["routes"]:
-        if name == "claude_domain":
-            clash_rules.extend(f"{guard},{policy}" for guard in routing["claude_guards"])
         option = ",no-resolve" if by_name[name]["behavior"] == "ipcidr" and name != "cn_ip" else ""
         clash_rules.append(f"RULE-SET,{name},{policy}{option}")
     for name, policy in routing["surge"]["routes"]:
-        if name == "claude_domain":
-            surge_rules.extend(f"{guard},{policy}" for guard in routing["claude_guards"])
-        output = by_name[name].get("output", name)
-        surge_rules.append(f"RULE-SET,{base}/Surge/{output}.list,{policy}")
+        surge_rules.append(f"RULE-SET,{published_url(base, by_name[name], 'Surge', 'list')},{policy}")
     clash_rules.extend(routing["clash"]["fallback"])
     surge_rules.extend(routing["surge"]["fallback"])
     return {"rule-providers": providers, "rules": clash_rules}, surge_rules
@@ -90,7 +80,7 @@ def render_profiles(manifest, routing, contract):
     surge_lines = []
     for rule in surge:
         surge_lines.append(rule)
-        if rule.endswith("/Surge/claude_domain.list,Claude"):
+        if rule.split(",")[1].split("?")[0].endswith("/Surge/claude_domain.list"):
             surge_lines.append("# Insert local home Wi-Fi DIRECT exceptions here, AFTER all Claude rules.")
     return {
         "Profiles/Clash.rules.yaml": ("\n".join(lines) + "\n").encode(),
