@@ -1,7 +1,7 @@
 {
   "classical_extensions": [
     {
-      "complete_classical_entries": 13,
+      "complete_classical_entries": 23,
       "extra_rules": [
         "DOMAIN-KEYWORD,anthropic",
         "DOMAIN-KEYWORD,claude",
@@ -39,7 +39,7 @@
           "matched": false
         }
       ],
-      "upstream_domain_entries": 9
+      "upstream_domain_entries": 19
     }
   ],
   "disjoint": [
@@ -148,9 +148,29 @@
       "before": "claude_domain",
       "examples": [
         {
+          "left_entry": "+.ant.dev",
+          "right_entry": "+.ant.dev",
+          "witness": "ant.dev"
+        },
+        {
           "left_entry": "+.anthropic.com",
           "right_entry": "+.anthropic.com",
           "witness": "anthropic.com"
+        },
+        {
+          "left_entry": "+.anthropic.team",
+          "right_entry": "+.anthropic.team",
+          "witness": "anthropic.team"
+        },
+        {
+          "left_entry": "+.antspace.dev",
+          "right_entry": "+.antspace.dev",
+          "witness": "antspace.dev"
+        },
+        {
+          "left_entry": "+.chatbotclaude.com",
+          "right_entry": "+.chatbotclaude.com",
+          "witness": "chatbotclaude.com"
         },
         {
           "left_entry": "+.clau.de",
@@ -163,6 +183,11 @@
           "witness": "claude.ai"
         },
         {
+          "left_entry": "+.claude.app",
+          "right_entry": "+.claude.app",
+          "witness": "claude.app"
+        },
+        {
           "left_entry": "+.claude.com",
           "right_entry": "+.claude.com",
           "witness": "claude.com"
@@ -171,29 +196,9 @@
           "left_entry": "+.claude.dev",
           "right_entry": "+.claude.dev",
           "witness": "claude.dev"
-        },
-        {
-          "left_entry": "+.claudemcpclient.com",
-          "right_entry": "+.claudemcpclient.com",
-          "witness": "claudemcpclient.com"
-        },
-        {
-          "left_entry": "+.claudemcpcontent.com",
-          "right_entry": "+.claudemcpcontent.com",
-          "witness": "claudemcpcontent.com"
-        },
-        {
-          "left_entry": "+.claudeusercontent.com",
-          "right_entry": "+.claudeusercontent.com",
-          "witness": "claudeusercontent.com"
-        },
-        {
-          "left_entry": "servd-anthropic-website.b-cdn.net",
-          "right_entry": "servd-anthropic-website.b-cdn.net",
-          "witness": "servd-anthropic-website.b-cdn.net"
         }
       ],
-      "overlap_count": 9
+      "overlap_count": 19
     },
     {
       "after": "meta_domain",
@@ -1049,7 +1054,7 @@
   "scope": "domain categories; converted classical sets use upstream-only baselines; broad extensions audited separately",
   "subsets": [
     {
-      "checked_entries": 9,
+      "checked_entries": 19,
       "child": "claude_domain",
       "parent": "ai"
     },
