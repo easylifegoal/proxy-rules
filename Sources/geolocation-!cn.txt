@@ -761,6 +761,7 @@
 +.addthiscdn.com
 +.addthisedge.com
 +.addtoany.com
++.addtodropbox.com
 +.addyoutube.com
 +.adelaidenow.com.au
 +.adgoogle.net
@@ -6300,6 +6301,7 @@
 +.darwinsource.org
 +.darwinsourcecode.com
 +.dasaob.online
++.dash.ai
 +.dashlane.com
 +.dashly.app
 +.dashly.help
@@ -7056,6 +7058,7 @@
 +.docs.new
 +.docs.rs
 +.docs.rw
++.docsend.com
 +.doctor-videos.com
 +.documentforce.com
 +.documentingreality.com
@@ -7250,12 +7253,15 @@
 +.dropboxapi.com
 +.dropboxbusiness.com
 +.dropboxcaptcha.com
++.dropboxexperiment.com
 +.dropboxforum.com
 +.dropboxforums.com
 +.dropboxinsiders.com
++.dropboxlegal.com
 +.dropboxmail.com
 +.dropboxpartners.com
 +.dropboxstatic.com
++.dropboxteam.com
 +.dropboxusercontent.com
 +.drpc.org
 +.drtuber.com
@@ -10973,9 +10979,11 @@
 +.helixstudios.net
 +.helloandroid.com
 +.helloavgirls.com
++.hellofax.com
 +.hellokittybeats.com
 +.hellomoto.com
 +.helloqueer.com
++.hellosign.com
 +.hellosmartbook.com
 +.hellporno.com
 +.hellven.net
@@ -26690,6 +26698,7 @@ docker-pinata-support.s3.amazonaws.com
 doy2mn9upadnk.cloudfront.net
 dqd0jw5gvbchn.cloudfront.net
 dqrpb9wgowsf5.cloudfront.net
+dropbox.zendesk.com
 ds-linear-abematv.akamaized.net
 ds-vod-abematv.akamaized.net
 ds0h3roq6wcgc.cloudfront.net
