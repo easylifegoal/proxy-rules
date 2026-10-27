@@ -277,7 +277,7 @@
           "witness": "deepmind.google"
         }
       ],
-      "overlap_count": 59
+      "overlap_count": 65
     },
     {
       "after": "microsoft_domain",
@@ -470,6 +470,11 @@
           "witness": "netflix.com"
         },
         {
+          "left_entry": "+.netflix.com.edgesuite.net",
+          "right_entry": "+.netflix.com.edgesuite.net",
+          "witness": "netflix.com.edgesuite.net"
+        },
+        {
           "left_entry": "+.netflix.net",
           "right_entry": "+.netflix.net",
           "witness": "netflix.net"
@@ -498,11 +503,6 @@
           "left_entry": "+.netflixdnstest3.com",
           "right_entry": "+.netflixdnstest3.com",
           "witness": "netflixdnstest3.com"
-        },
-        {
-          "left_entry": "+.netflixdnstest4.com",
-          "right_entry": "+.netflixdnstest4.com",
-          "witness": "netflixdnstest4.com"
         }
       ],
       "overlap_count": 24

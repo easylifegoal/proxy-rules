@@ -176,6 +176,7 @@
 +.myhulu.com
 +.netflix.ca
 +.netflix.com
++.netflix.com.edgesuite.net
 +.netflix.net
 +.netflixdnstest0.com
 +.netflixdnstest1.com
@@ -219,6 +220,7 @@
 +.spoti.fi
 +.spotify-everywhere.com
 +.spotify.com
++.spotify.com.edgesuite.net
 +.spotify.design
 +.spotify.link
 +.spotifycdn.com
@@ -489,12 +491,10 @@ js-cdn.music.apple.com
 linear-abematv.akamaized.net
 msh.amazon.co.uk
 musicstatus.music.apple.com
-netflix.com.edgesuite.net
 np-edge.itunes.apple.com
 play-edge.itunes.apple.com
 play.music.apple.com
 speedysub.music.apple.com
-spotify.com.edgesuite.net
 spotify.map.fastly.net
 spotify.map.fastlylb.net
 static.siege-amazon.com
