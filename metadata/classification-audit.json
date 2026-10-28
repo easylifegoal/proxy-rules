@@ -210,6 +210,11 @@
           "witness": "meta.ai"
         },
         {
+          "left_entry": "+.metaaiusercontent.com",
+          "right_entry": "+.metaaiusercontent.com",
+          "witness": "metaaiusercontent.com"
+        },
+        {
           "left_entry": "+.metaaivm.com",
           "right_entry": "+.metaaivm.com",
           "witness": "metaaivm.com"
@@ -220,7 +225,7 @@
           "witness": "muse.ai"
         }
       ],
-      "overlap_count": 3
+      "overlap_count": 4
     },
     {
       "after": "google_domain",
