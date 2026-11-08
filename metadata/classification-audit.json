@@ -1,7 +1,7 @@
 {
   "classical_extensions": [
     {
-      "complete_classical_entries": 23,
+      "complete_classical_entries": 25,
       "extra_rules": [
         "DOMAIN-KEYWORD,anthropic",
         "DOMAIN-KEYWORD,claude",
@@ -39,7 +39,7 @@
           "matched": false
         }
       ],
-      "upstream_domain_entries": 19
+      "upstream_domain_entries": 21
     }
   ],
   "disjoint": [
@@ -198,7 +198,7 @@
           "witness": "claude.dev"
         }
       ],
-      "overlap_count": 19
+      "overlap_count": 21
     },
     {
       "after": "meta_domain",
@@ -339,7 +339,7 @@
           "witness": "copilot-telemetry-service.githubusercontent.com"
         }
       ],
-      "overlap_count": 21
+      "overlap_count": 23
     },
     {
       "after": "global_media_domain",
@@ -738,7 +738,7 @@
           "witness": "git.io"
         }
       ],
-      "overlap_count": 98
+      "overlap_count": 100
     }
   ],
   "samples": [
@@ -1059,7 +1059,7 @@
   "scope": "domain categories; converted classical sets use upstream-only baselines; broad extensions audited separately",
   "subsets": [
     {
-      "checked_entries": 19,
+      "checked_entries": 21,
       "child": "claude_domain",
       "parent": "ai"
     },
