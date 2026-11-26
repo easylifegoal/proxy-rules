@@ -16,7 +16,6 @@
     "Google",
     "GlobalMedia",
     "Meta",
-    "APNS",
     "Apple",
     "Nodeseek",
     "Chain-US-ISP",
@@ -148,10 +147,6 @@
       [
         "microsoft_domain",
         "Microsoft"
-      ],
-      [
-        "apns",
-        "APNS"
       ],
       [
         "apple_domain",

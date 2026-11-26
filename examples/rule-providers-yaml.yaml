@@ -106,13 +106,6 @@ rule-providers:
     interval: 86400
     path: ./ruleset/google_domain.yaml
     url: https://raw.githubusercontent.com/easylifegoal/proxy-rules/main/Clash/google_domain.yaml
-  "apns":
-    type: http
-    behavior: classical
-    format: yaml
-    interval: 86400
-    path: ./ruleset/apns.yaml
-    url: https://raw.githubusercontent.com/easylifegoal/proxy-rules/main/Clash/apns.yaml
   "apple_domain":
     type: http
     behavior: domain

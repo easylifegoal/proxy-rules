@@ -53,10 +53,9 @@ def validate_routing(manifest, routing, contract):
         raise ValueError("Claude guards must route to the Claude policy")
     if dict(routes)["meta_domain"] != "Meta":
         raise ValueError("Meta must use its own policy group")
-    if any(dict(routes)[name] != policy for name, policy in
-           (("apns", "APNS"), ("apple_domain", "Apple"), ("apple_ip", "Apple"))):
-        raise ValueError("APNS and Apple must use separate policy groups")
-    for first, second in contract["priority_overlaps"] + [["apns", "apple_domain"]]:
+    if any(dict(routes)[name] != "Apple" for name in ("apple_domain", "apple_ip")):
+        raise ValueError("Apple sets must use the Apple policy group")
+    for first, second in contract["priority_overlaps"]:
         if names.index(first) >= names.index(second):
             raise ValueError(f"Routing priority reversed: {first} before {second}")
     broad = {"geolocation-!cn", "cn_domain", "cn_ip"}

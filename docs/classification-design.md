@@ -14,7 +14,7 @@
 | Meta | MetaCubeX `meta` 公司合集，包含 Facebook / Instagram / Threads / WhatsApp / Messenger / Oculus 等 | 单独使用 Meta 组，放在 AI 后、通用国外规则前；`meta.ai` 优先走 AI，不并入 GlobalMedia |
 | Google / Microsoft / Apple | 保留各自 MetaCubeX 分类 | 公司分类是较宽的兜底，不从中强删 AI、影音等合理子集 |
 | OneDrive / GitHub / PayPal / 银行 / Telegram | 保留各自专用分类 | 小类先于公司类、通用 Proxy 类 |
-| APNS | 原 QuixoticHeart 13 条 classical 规则 | 两端使用独立 APNS 策略组，普通 Apple 服务使用 Apple；APNS 放在 Apple 前，保留 YAML / Surge 格式 |
+| APNS（已停用） | 2026-11-27 按用户要求移除独立规则及同步源 | 不再生成专用规则和 APNS 策略引用；推送按剩余 Apple / 其他路由匹配，不关闭系统推送 |
 | CN / Private / 通用 Proxy | 现有域名和 IP 来源 | 作为基础/通用分类，不在这次重构中更改用户的直连和兜底逻辑 |
 | Fake-IP 排除 | 原 wwqgtxx 来源 | 仅用于 Mihomo DNS，不当作业务路由集合 |
 
@@ -67,18 +67,18 @@ Meta 合集保留上游公司分类的广覆盖范围，可能含开发者项目
 2. Claude 在 AI 前；AI 在 Meta / Google / Microsoft 等公司分类前。
 3. 若启用 Netflix、YouTube 专用路由，则放在 GlobalMedia 前；无需专用策略时可让它们指向同一个 GlobalMedia 策略。
 4. GlobalMedia 在 Google / Apple 等公司分类前，避免 YouTube、Apple TV+ / Music 被公司组提前接走。
-5. OneDrive、GitHub 在 Microsoft 前；APNS 在 Apple 前。
+5. OneDrive、GitHub 在 Microsoft 前。
 6. 业务分类在通用 Proxy / CN 及最终兜底之前；通用集合相互的既有顺序、IP 解析策略和最终兜底暂不调整。
 
-IP 与域名文件分开发布。只有已明确维护的 Netflix、Telegram、Apple lite 等服务 IP 集合继续存在；不为媒体聚合自动加入整个云厂商 IP 或 ASN。APNS 是保留原混合规则的例外。
+IP 与域名文件分开发布。只有已明确维护的 Netflix、Telegram、Apple lite 等服务 IP 集合继续存在；不为媒体聚合自动加入整个云厂商 IP 或 ASN。独立 APNS 混合规则已停用。
 
 `Profiles/` 由 `custom/client-routing.json` schema 6 的一份 `common` 定义生成，以 Clash 为公共基准；`surge_wifi` 只允许两处已审核的 Wi-Fi 例外，`non-cn-quic` 的 `clients: ["clash"]` 明确标注唯一单端拦截规则。NodeSeek、N26、IP 查询、农行检测、Safeway、Magpie 及端口兜底均统一，规则仅能引用声明过的策略组或内置动作，不直接指定节点。Tailscale 主机规则在两端都有，占位填值后启用。未启用广告规则不保留；完整模板不包含节点、DNS、重写或 MITM 配置。
 
 回归测试检查两端规则在语法 / URL 归一化、排除两条 Surge Wi-Fi 规则和一条 Clash UDP/443 拦截后，公共规则逐条相等；另行验证拦截不能从 Clash 丢失或重新加入 Surge。CN IP 的解析选项也统一，Surge 的 `cn_ip` 不再带 `no-resolve`。Clash 拦截使用共享 CN 域名和 IP provider；Surge 则保留本地原生 QUIC 控制，不保证两者拦截范围一致。`scripts/audit_local_profiles.rb` 可只读比对私有配置全部路由、顺序、provider 及策略组引用，输出不含私人值。相同组名不代表组内当前选择自动同步；节点库、协议和运行时状态仍由各客户端管理。
 
-[custom/classification.json](../custom/classification.json) 的 `domain_priority` 是用来测试业务域名的参考顺序；不含 Wi-Fi、IP、APNS classical、CN、私有网络或最终兜底。报告中的 `winner: null` 只表示没有命中这些受测业务分类，**不是 DIRECT，也不是实际请求无法匹配任何规则**。
+[custom/classification.json](../custom/classification.json) 的 `domain_priority` 是用来测试业务域名的参考顺序；不含 Wi-Fi、IP、CN、私有网络或最终兜底。报告中的 `winner: null` 只表示没有命中这些受测业务分类，**不是 DIRECT，也不是实际请求无法匹配任何规则**。
 
-同一份参考顺序会生成 [Clash 业务规则片段](../examples/business-rules-clash.yaml) 和 [Surge 业务规则片段](../examples/business-rules-surge.conf)。它们不是完整配置，`POLICY_*` 必须映射到各自已有策略；不能覆盖当前整段规则。APNS、服务 IP、Wi-Fi 等不包含在这个域名片段里，接入时另行保留和检查。
+同一份参考顺序会生成 [Clash 业务规则片段](../examples/business-rules-clash.yaml) 和 [Surge 业务规则片段](../examples/business-rules-surge.conf)。它们不是完整配置，`POLICY_*` 必须映射到各自已有策略；不能覆盖当前整段规则。服务 IP、Wi-Fi 等不包含在这个域名片段里，接入时另行保留和检查；独立 APNS 规则已移除。
 
 ## 自动防止分类退化
 

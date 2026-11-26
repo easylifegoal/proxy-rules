@@ -34,7 +34,6 @@ rules:
   - "RULE-SET,onedrive_domain,OneDrive"
   - "RULE-SET,google_domain,Google"
   - "RULE-SET,microsoft_domain,Microsoft"
-  - "RULE-SET,apns,APNS"
   - "RULE-SET,apple_domain,Apple"
   - "RULE-SET,apple_ip,Apple,no-resolve"
   - "RULE-SET,geolocation-!cn,Proxy"
@@ -152,13 +151,6 @@ rule-providers:
     interval: 86400
     path: "./providers/proxy-rules/google_domain.mrs"
     url: "https://raw.githubusercontent.com/easylifegoal/proxy-rules/main/Clash/google_domain.mrs"
-  "apns":
-    type: "http"
-    behavior: "classical"
-    format: "yaml"
-    interval: 86400
-    path: "./providers/proxy-rules/apns.yaml"
-    url: "https://raw.githubusercontent.com/easylifegoal/proxy-rules/main/Clash/apns.yaml"
   "apple_domain":
     type: "http"
     behavior: "domain"

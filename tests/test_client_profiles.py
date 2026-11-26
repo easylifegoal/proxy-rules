@@ -35,14 +35,14 @@ class ClientProfileTests(unittest.TestCase):
             clash, surge = self.build(templates)
             self.assertEqual([r for r in clash["rules"] if r != QUIC_RULE],
                              [normalize_surge_rule(r, self.manifest) for r in surge if not r.startswith("SUBNET,")])
-            self.assertEqual(len(clash["rules"]), 38 if templates else 37)
-            self.assertEqual(len(surge), 39 if templates else 36)
+            self.assertEqual(len(clash["rules"]), 37 if templates else 36)
+            self.assertEqual(len(surge), 38 if templates else 35)
             self.assertEqual(required_policies(clash["rules"]), required_policies(surge))
 
     def test_private_settings_and_dns_rule_not_routed(self):
         clash, surge = self.build()
         self.assertEqual(set(clash), {"rules", "rule-providers"})
-        self.assertEqual(len(clash["rule-providers"]), 24)
+        self.assertEqual(len(clash["rule-providers"]), 23)
         self.assertFalse(any("fakeipfilter" in r for r in clash["rules"] + surge))
         for p in clash["rule-providers"].values():
             self.assertTrue(p["url"].startswith("https://raw.githubusercontent.com/easylifegoal/proxy-rules/main/Clash/"))
@@ -51,7 +51,7 @@ class ClientProfileTests(unittest.TestCase):
     def test_formats_bank_alias_and_cache_versions(self):
         clash, surge = self.build()
         providers = clash["rule-providers"]
-        for name in ("claude_domain", "apns"):
+        for name in ("claude_domain",):
             self.assertEqual((providers[name]["behavior"], providers[name]["format"]), ("classical", "yaml"))
         self.assertTrue(providers["usbank_domain"]["url"].endswith("/usbank.mrs"))
         self.assertTrue(any("/usbank.list,USBank" in r for r in surge))
@@ -78,9 +78,8 @@ class ClientProfileTests(unittest.TestCase):
             self.assertTrue(set(required_policies(rules)) <= set(self.routing["policy_groups"]))
             self.assertNotIn("aiyun", required_policies(rules))
             self.assertNotIn("Paypal", required_policies(rules))
-        self.assertIn("RULE-SET,apns,APNS", clash["rules"])
         self.assertIn("RULE-SET,netflix_domain,Netflix", clash["rules"])
-        for name, policy in (("apns", "APNS"), ("netflix_domain", "Netflix"), ("github_domain", "GitHub"),
+        for name, policy in (("netflix_domain", "Netflix"), ("github_domain", "GitHub"),
                              ("onedrive_domain", "OneDrive"), ("microsoft_domain", "Microsoft"),
                              ("paypal_domain", "PayPal")):
             self.assertTrue(any(r.endswith(f"/{name}.list,{policy}") for r in surge))
@@ -215,15 +214,25 @@ class ClientProfileTests(unittest.TestCase):
             with self.subTest(policy=policy), self.assertRaisesRegex(ValueError, "own policy group"):
                 validate_routing(self.manifest, routing, self.contract)
 
-    def test_apns_and_apple_cannot_be_merged(self):
-        for name, policy in (("apns", "Apple"), ("apple_domain", "APNS"), ("apple_ip", "APNS")):
+    def test_apple_sets_keep_the_apple_policy(self):
+        for name, policy in (("apple_domain", "Proxy"), ("apple_ip", "DIRECT")):
             routing = copy.deepcopy(self.routing)
             next(r for r in routing["common"]["routes"] if r[0] == name)[1] = policy
-            with self.subTest(name=name), self.assertRaisesRegex(ValueError, "separate policy groups"):
+            with self.subTest(name=name), self.assertRaisesRegex(ValueError, "Apple policy group"):
                 validate_routing(self.manifest, routing, self.contract)
 
+    def test_retired_apns_is_absent_from_sources_and_both_profiles(self):
+        clash, surge = self.build()
+        self.assertNotIn("apns", self.manifest["upstreams"])
+        self.assertNotIn("apns", {rule["name"] for rule in self.manifest["rules"]})
+        self.assertNotIn("APNS", self.routing["policy_groups"])
+        self.assertNotIn("apns", clash["rule-providers"])
+        self.assertFalse(any("apns" in rule.lower() for rule in clash["rules"] + surge))
+        self.assertIn("RULE-SET,apple_domain,Apple", clash["rules"])
+        self.assertIn("RULE-SET,apple_ip,Apple,no-resolve", clash["rules"])
+
     def test_all_priority_pairs_are_enforced(self):
-        for first, second in self.contract["priority_overlaps"] + [["apns", "apple_domain"]]:
+        for first, second in self.contract["priority_overlaps"]:
             routing = copy.deepcopy(self.routing)
             routes = routing["common"]["routes"]
             a, b = [next(i for i, r in enumerate(routes) if r[0] == n) for n in (first, second)]

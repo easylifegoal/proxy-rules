@@ -6,7 +6,7 @@
 
 [工作流与运行记录](https://github.com/easylifegoal/proxy-rules/actions/workflows/sync-rules.yml)
 
-结合 Clash 与 Surge 的分类需求，共 24 组：MetaCubeX 派生分类 21 组（含 Meta 公司合集及服务清单聚合的 GlobalMedia）、APNS 1 组、Fake-IP 排除名单 1 组、手动维护的银行域名 1 组。
+结合 Clash 与 Surge 的分类需求，共 23 组：MetaCubeX 派生分类 21 组（含 Meta 公司合集及服务清单聚合的 GlobalMedia）、Fake-IP 排除名单 1 组、手动维护的银行域名 1 组。
 不上传节点、密码、UUID、私钥或完整代理配置，也不会自动修改任何客户端配置。
 仓库中的 `Profiles/` 是保留全部已启用分流规则及顺序的规则模板；仅去除连接信息，私人地址和 SSID 以原位置上的注释占位规则保留。包含节点的完整配置只保存在用户自己的设备 / iCloud。
 
@@ -32,7 +32,6 @@
 | 私有、中国、Telegram、Netflix IP | MetaCubeX `meta/geo/geoip` |
 | Apple IP | MetaCubeX `meta/geo-lite/geoip/apple.mrs`，保留原来的 lite 来源 |
 | `google_domain` | MetaCubeX `google.mrs`，**包含 YouTube**；不引入整份 Google/云平台 IP 集合，也不等同于旧 Surge Google 混合名单 |
-| `apns` | QuixoticHeart/rule-set `ruleset/loon/apns.list`，保留域名、关键词、IPv4/IPv6 和 no-resolve；仅输出 classical YAML / 文本 / Surge |
 | `fakeipfilter_domain` | wwqgtxx/clash-rules `release/fakeip-filter.mrs`，更上游为 ShellCrash |
 | `usbank_domain` | 本仓库 `custom/usbank.txt`，仅下面说明的六个银行域名 |
 
@@ -42,9 +41,9 @@
 
 | 路径 | 用途 |
 | --- | --- |
-| `Clash/<名称>.mrs` | Mihomo，`format: mrs`；`behavior` 对应 domain 或 ipcidr；**Claude / APNS 不生成 MRS** |
-| `Clash/<名称>.yaml` | 可读 YAML，通常为 domain/ipcidr；**银行、Claude 与 APNS 使用 classical 格式** |
-| `Text/<名称>.list` | 可读规范化数据；域名/IP 清单不能直接当作 Surge RULE-SET，Claude / APNS 为 classical 规则 |
+| `Clash/<名称>.mrs` | Mihomo，`format: mrs`；`behavior` 对应 domain 或 ipcidr；**Claude 不生成 MRS** |
+| `Clash/<名称>.yaml` | 可读 YAML，通常为 domain/ipcidr；**银行与 Claude 使用 classical 格式** |
+| `Text/<名称>.list` | 可读规范化数据；域名/IP 清单不能直接当作 Surge RULE-SET，Claude 为 classical 规则 |
 | `Surge/<名称>.list` | Surge RULE-SET，不包含策略名称；IP 默认 no-resolve，但 `cn_ip` 允许解析，与 Clash 保持一致 |
 | `Sources/*` | 未修改的上游 MRS / classical 原文，以及规范化文本，用于审核与重新生成 |
 | `metadata/sync-state.json` | 最后一次发布使用的源版本、哈希及条数，不是最近一次检查时间 |
@@ -54,12 +53,12 @@
 
 ### 两端规则配置
 
-- [Clash 规则配置](Profiles/Clash.rules.yaml)：24 个 provider、37 条公共路由，加 1 条 Clash 专用 UDP/443 拦截，共 38 条（37 条已展开规则 + 1 条私人地址占位规则）。Fake-IP 只供现有 DNS 配置引用。Claude / APNS 使用 YAML，其余使用 MRS。
-- [Surge 规则配置](Profiles/Surge.rules.conf)：同样的 37 条公共路由，加 2 条 Wi-Fi 直连例外，共 39 条（36 条已展开规则 + 1 条私人地址占位 + 2 条 Wi-Fi 占位）；不输出 UDP/443 拦截规则。
+- [Clash 规则配置](Profiles/Clash.rules.yaml)：23 个 provider、36 条公共路由，加 1 条 Clash 专用 UDP/443 拦截，共 37 条（36 条已展开规则 + 1 条私人地址占位规则）。Fake-IP 只供现有 DNS 配置引用。Claude 使用 YAML，其余使用 MRS。
+- [Surge 规则配置](Profiles/Surge.rules.conf)：同样的 36 条公共路由，加 2 条 Wi-Fi 直连例外，共 38 条（35 条已展开规则 + 1 条私人地址占位 + 2 条 Wi-Fi 占位）；不输出 UDP/443 拦截规则。
 
 两份都**不是独立可连接的完整配置**，不含节点连接信息、策略组定义、真实私人 IP / SSID、DNS 设置或控制器凭据。公共路由只维护一份：`custom/client-routing.json` schema 6 的 `common.routes`、`common.insertions`、`common.fallback` 定义规则、顺序和兜底，`policy_groups` 声明可引用的组名；不维护两份不同业务策略表。客户端差异明确限定为：`surge_wifi` 的两条 Wi-Fi 直连，以及 `non-cn-quic` 上的 `"clients": ["clash"]`（Surge 使用原生 QUIC 处理）。构建校验拒绝把其他业务规则设为单端专用。未启用的两条广告规则按用户要求不收录。
 
-NodeSeek、N26、农行检测、IP 查询、Safeway、Magpie 等业务规则均在两端保留。规则只指向同名策略组或 `DIRECT` / `REJECT`，不直接引用节点：NodeSeek → `Nodeseek`，N26 → `N26`，PayPal 统一大小写为 `PayPal`。Surge 本地配置补齐缺少的组；两端均由独立的 `APNS` 组处理推送，其他 Apple 流量走 `Apple`，两组不能合并。
+NodeSeek、N26、农行检测、IP 查询、Safeway、Magpie 等业务规则均在两端保留。规则只指向同名策略组或 `DIRECT` / `REJECT`，不直接引用节点：NodeSeek → `Nodeseek`，N26 → `N26`，PayPal 统一大小写为 `PayPal`。Surge 本地配置补齐缺少的组；2026-11-27 起停用独立 APNS 规则、provider 和策略组，不再同步专用 APNS 数据。推送按现有 Apple / 其他路由继续匹配；这不会关闭系统推送。Apple 域名和带 `no-resolve` 的 IP 规则保持不变。
 
 私人规则不会被丢弃或替换成一个随意的真实值，而是作为注释留在准确位置：
 
@@ -75,13 +74,13 @@ NodeSeek、N26、农行检测、IP 查询、Safeway、Magpie 等业务规则均�
 | Facebook / Instagram / Threads / WhatsApp / Messenger / Oculus 等 | Meta |
 | Google | Google |
 | OneDrive / GitHub / 微软 | OneDrive / GitHub / Microsoft |
-| APNS / Apple | APNS / Apple |
+| Apple（含命中 Apple 集合的推送） | Apple |
 | PayPal / 银行 / Telegram | PayPal / USBank / Proxy |
 | NodeSeek / N26 | Nodeseek / N26 |
 | Magpie 关键词 | Magpie / Magpie-Proxy |
 | 未匹配流量的兜底 | 80、443、22 → Final，其余 DIRECT |
 
-Claude 在 AI 之前；AI 在 Meta 等公司分类之前，`meta.ai` 继续走 AI；Netflix / YouTube 在 GlobalMedia 之前；媒体在 Google / Apple 之前；OneDrive / GitHub 在微软之前；APNS 在 Apple 前。Meta 在通用国外规则之前，不并入 GlobalMedia。这些顺序和两端公共规则逐条归一化后的相等性均有自动测试。Surge 不再追加独有的 `LAN` 规则或 `FINAL,Proxy,dns-failed`，改为与 Clash 相同的端口兜底及最终直连。
+Claude 在 AI 之前；AI 在 Meta 等公司分类之前，`meta.ai` 继续走 AI；Netflix / YouTube 在 GlobalMedia 之前；媒体在 Google / Apple 之前；OneDrive / GitHub 在微软之前。Meta 在通用国外规则之前，不并入 GlobalMedia。这些顺序和两端公共规则逐条归一化后的相等性均有自动测试。Surge 不再追加独有的 `LAN` 规则或 `FINAL,Proxy,dns-failed`，改为与 Clash 相同的端口兜底及最终直连。
 
 Meta 是社区维护的公司范围合集，不是官方归属认证，也不保证覆盖所有端点。保留上游较宽的品牌、开发者及相关域名；与 AI 的合理交叉通过优先级处理，不从 Meta 源中硬删。两端完整配置新增的 Meta 组默认跟随 Proxy，也可单独选节点；已有 Surge Wi-Fi 例外仍可能提前直连。
 
@@ -95,7 +94,7 @@ Claude 已统一为一个完整规则集：上游域名名单，加上 `claude-a
 
 Clash 的 `claude_domain` 必须使用 `behavior: classical`、`format: yaml`；旧 `Clash/claude_domain.mrs` 已停止生成并移除，历史版本可从 Git 恢复。Surge 继续使用 `Surge/claude_domain.list`。两端订阅增加 `?v=classical-v1`，Clash 的缓存路径改为 `.yaml`，避免迁移时继续读取旧的仅域名缓存；URL 仍跟随 main 更新，不锁死到某个提交。必须一起切换 provider 的格式、URL、缓存路径，再移除主配置里的重复四条；不能拿 classical YAML 配 domain behavior。
 
-Surge 的家庭 Wi-Fi 占位规则紧跟 `claude_domain`，公司 Wi-Fi 占位规则紧跟 `usbank_domain`（在 Claude / AI / PayPal 之后）；这是两条已审核的 Wi-Fi 例外，Claude 仍优先于它们。公共顺序以 Clash 为基准：农行检测与 IP 查询位于家庭 Wi-Fi 之前，银行 / APNS 不在公共列表最顶端。Surge 不再在 Wi-Fi 规则前额外拒绝非国内 UDP/443；命中直连后是否允许 QUIC 由其原生设置决定。具体 SSID 不进入本仓库。
+Surge 的家庭 Wi-Fi 占位规则紧跟 `claude_domain`，公司 Wi-Fi 占位规则紧跟 `usbank_domain`（在 Claude / AI / PayPal 之后）；这是两条已审核的 Wi-Fi 例外，Claude 仍优先于它们。公共顺序以 Clash 为基准：农行检测与 IP 查询位于家庭 Wi-Fi 之前，银行规则不在公共列表最顶端。Surge 不再在 Wi-Fi 规则前额外拒绝非国内 UDP/443；命中直连后是否允许 QUIC 由其原生设置决定。具体 SSID 不进入本仓库。
 
 Clash provider 缓存使用 `./providers/proxy-rules/`。原生校验会在临时配置中填入文档用 IP / Wi-Fi 名称，并给所有策略引用配上仅指向 DIRECT 的占位组；私人占位规则与 QUIC 嵌套规则也会被检查，不连接真实代理或重载用户配置。Linux CI 校验 Mihomo，Surge 校验需在安装 Surge 的 macOS 本地执行。逻辑规则格式参考 [Surge 官方文档](https://manual.nssurge.com/rules/logical.html) 和 [Mihomo 官方文档](https://wiki.metacubex.one/config/rules/)。
 
@@ -110,13 +109,13 @@ Clash provider 缓存使用 `./providers/proxy-rules/`。原生校验会在临�
 
 需要参考长期业务分类的先后关系时，使用 [Clash 业务顺序片段](examples/business-rules-clash.yaml) / [Surge 业务顺序片段](examples/business-rules-surge.conf)。两份由同一份分类约束生成，只含业务域名规则，不能替换完整配置；策略占位符需映射到各自已有策略。
 
-MRS 示例是 **MRS 优先**，其中 Claude / APNS 自动使用 `behavior: classical`、`format: yaml`。MRS 不支持关键词规则，不能生成部分 MRS 却声称完整等价。两者的 YAML 与 Surge 文件分别包含同一套完整规则。
+MRS 示例是 **MRS 优先**，其中 Claude 自动使用 `behavior: classical`、`format: yaml`。MRS 不支持关键词规则，不能生成部分 MRS 却声称完整等价。Claude 的 YAML 与 Surge 文件分别包含同一套完整规则。
 
 `fakeipfilter_domain` 是 Mihomo 的 **DNS Fake-IP 排除名单**，不是路由策略，因此不生成 Surge 路由文件。它包含 Mihomo 的单层通配符，不能直接换成 Surge 的跨层通配符；其余规则若将来出现不能等价转换的模式，构建会停止，绝不静默扩大匹配范围。
 
 MetaCubeX 跨格式生成以当前 **MRS 实际包含的规则**为基准。其他旧 classical 名单中的正则、关键词、进程、User-Agent 和 ASN 规则不会自动合并；这不是旧 Surge 名单的逐条镜像，差异详见对比文档。未做自定义修改的 MRS 会原样发布，不重新压缩替换。
 
-Claude / APNS 是显式的 classical 例外。目前仅接受两端共有的 `DOMAIN`、`DOMAIN-SUFFIX`、`DOMAIN-KEYWORD`、`IP-CIDR`、`IP-CIDR6` 及 IP 的 `no-resolve`。遇到新增的未知类型、选项或夹带策略名会阻止发布，不能静默丢弃。
+Claude 是显式的 classical 例外。目前仅接受两端共有的 `DOMAIN`、`DOMAIN-SUFFIX`、`DOMAIN-KEYWORD`、`IP-CIDR`、`IP-CIDR6` 及 IP 的 `no-resolve`。遇到新增的未知类型、选项或夹带策略名会阻止发布，不能静默丢弃。
 
 GlobalMedia 聚合时保留每个组件的原始 MRS、解码文本、SHA 与条数。每个组件分别执行格式和数量检查，避免一个服务丢失被其他服务新增掩盖。服务清单不会随娱乐大分类自动扩张。Disney+ 白名单中若有条目从上游消失，构建报错；新增条目需要审核后补入。
 
