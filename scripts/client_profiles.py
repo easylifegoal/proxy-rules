@@ -53,8 +53,11 @@ def validate_routing(manifest, routing, contract):
         raise ValueError("Claude guards must route to the Claude policy")
     if dict(routes)["meta_domain"] != "Meta":
         raise ValueError("Meta must use its own policy group")
-    if any(dict(routes)[name] != "Apple" for name in ("apple_domain", "apple_ip")):
+    if dict(routes)["apple_no_resolve"] != "Apple":
         raise ValueError("Apple sets must use the Apple policy group")
+    apple = next(rule for rule in manifest["rules"] if rule["name"] == "apple_no_resolve")
+    if apple["behavior"] != "classical" or apple.get("no_resolve") is not True:
+        raise ValueError("Apple shared set must retain classical no-resolve semantics")
     for first, second in contract["priority_overlaps"]:
         if names.index(first) >= names.index(second):
             raise ValueError(f"Routing priority reversed: {first} before {second}")
@@ -146,7 +149,7 @@ def profile_entries(manifest, routing, client):
     for name, policy in settings["routes"]:
         result.extend(dict(e) for e in insertions.get(name, [])
                       if client in e.get("clients", ["clash", "surge"]))
-        option = ",no-resolve" if by_name[name]["behavior"] == "ipcidr" and name != "cn_ip" else ""
+        option = ",no-resolve" if (by_name[name]["behavior"] == "ipcidr" and name != "cn_ip") or by_name[name].get("no_resolve") else ""
         result.append({"id": "set-" + name, "rule": f"RULE-SET,{name},{policy}{option}"})
         if client == "surge":
             result.extend({"id": w["id"], "template": w["template"]} for w in routing["surge_wifi"] if w["after"] == name)

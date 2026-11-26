@@ -5,10 +5,7 @@
     "Clash/BankOfAmerica.yaml": "f8e63d85c67a7d333c37c095c522524a52ca8ba9d465bd936c2b47c1e5b44772",
     "Clash/ai.mrs": "00f6b29e97e59e9bf20dc9bc5005dc673536c30595ff1c32e6007544205bf1ad",
     "Clash/ai.yaml": "2606123c21adcdd53346afde4e84e2669d8bb9ea0ce30dace46b5c1bdde70141",
-    "Clash/apple_domain.mrs": "a34b8c69e264fd518e56b614b91ee3018b9b9fc8d460e1421e08402a0cc74543",
-    "Clash/apple_domain.yaml": "d8b0e4eeac0569bc024dbddb52835b84cfa9c7f4b63a7b9abb4d2df4dd23499a",
-    "Clash/apple_ip.mrs": "9c3ac6e550ff760e7af78040ceac1711e4b6173876069926e40a492ad1683cb5",
-    "Clash/apple_ip.yaml": "d1eb5839bcb229e06fb699cc6c0d0ac845fe50ad31f55bb559249b3ca6821c14",
+    "Clash/apple_no_resolve.yaml": "b2352cab6c04cdfd651ab9e06dad63e24ff3740db1b8ae7649730757dcb622bc",
     "Clash/claude_domain.yaml": "64655de6db22a9061f38571406401c8fe116fc35f0a92edbf74d7dbb0b5dd1ab",
     "Clash/cn_domain.mrs": "0b8c7c4d9773471991dd65737fdb16f3bf1baf2512c8b764d4c235318f01b7c6",
     "Clash/cn_domain.yaml": "145a4dc0c99a31b146e7a3408e39235a32ec491ffa9091e8613a506e16c6a860",
@@ -48,14 +45,13 @@
     "Clash/usbank.yaml": "f8e63d85c67a7d333c37c095c522524a52ca8ba9d465bd936c2b47c1e5b44772",
     "Clash/youtube_domain.mrs": "e212b2ce9f39b30f4e2ab57da9ed0937673606bc56bb46e5d55ad7dd9af00aef",
     "Clash/youtube_domain.yaml": "625cbeba565bf7dbc27a95903201ef13f252c73081feaca5ddd32d0bca79206b",
-    "Profiles/Clash.rules.yaml": "9850d3443f701ac91b0a55d4e602685c3158acfe5be068ae84a42c69296b81dd",
-    "Profiles/Surge.rules.conf": "fa6e6442f44ce4be2a7571ef80bfa30b4635b830f0e44eac0d972d353ba31818",
+    "Profiles/Clash.rules.yaml": "ea3e84b3308095b8ed199631fb4ee58773ba6399f59895a937e9ffc21b02ab22",
+    "Profiles/Surge.rules.conf": "b99a3fe57df69fd834723cf270a3e8a16ea31024a341e7ffd39a075211190a92",
     "Sources/ai.mrs": "00f6b29e97e59e9bf20dc9bc5005dc673536c30595ff1c32e6007544205bf1ad",
     "Sources/ai.txt": "5689118d195e4fe15a191affe6784c74ee3e82e2ec6f50d12b352e557c44968a",
-    "Sources/apple_domain.mrs": "a34b8c69e264fd518e56b614b91ee3018b9b9fc8d460e1421e08402a0cc74543",
-    "Sources/apple_domain.txt": "f010c633c8fd4139ce0aad31fa0028c7f45485a878a49a2c206d0100941eefea",
-    "Sources/apple_ip.mrs": "9c3ac6e550ff760e7af78040ceac1711e4b6173876069926e40a492ad1683cb5",
-    "Sources/apple_ip.txt": "dbdd65c2e3d83fceda19c8d6d6c9146fa875adba268880b21db418f12a3d6c04",
+    "Sources/apple_no_resolve.excluded.list": "37c27a5e0dc8a6600c687420a0f6f562b55a60552fdc551cbc757fb031f38ac2",
+    "Sources/apple_no_resolve.list": "e45e27cd85b876512dec54589fe2e0a5dc271eed4942016f023d43d5bb5a68a3",
+    "Sources/apple_no_resolve.txt": "769b00160e4f1dd925b67dadc4102ff0e6a647e91a9e174d81d3c089d60060bb",
     "Sources/claude_domain.mrs": "fd237979b2ee3132ce2003fdca9331e2abcdbfed52d1e6bbebfe06432182ffc6",
     "Sources/claude_domain.txt": "81f3df5978e69cef1a6a68bf282c48f2a044b69589e82e160c2eb5b5cfc1ba67",
     "Sources/cn_domain.mrs": "0b8c7c4d9773471991dd65737fdb16f3bf1baf2512c8b764d4c235318f01b7c6",
@@ -136,8 +132,7 @@
     "Sources/youtube_domain.txt": "c20c54d2acd671a7000adbaf16cfe4c7027c19d2947365f79f0d5a7de3d922ee",
     "Surge/BankOfAmerica.list": "a18368f61dcc5b7e1d30a369684da05289dbe6d30f781ad56e75c62be5183137",
     "Surge/ai.list": "9eb57fb39298f5d8c7fa344f09ca7c8d8b45bccb95b133fc231af85dbccd71b6",
-    "Surge/apple_domain.list": "f9d808eebeeafa04af25a153d6b8a4efb6421056913eec1b06d7e6578a002c1b",
-    "Surge/apple_ip.list": "667314dc88fcf3a7f533e4daf073737304c81b1b458c0e3d561eb29b60ffe78d",
+    "Surge/apple_no_resolve.list": "1e0cf54408da279c2dc11e03b01209aabe4efd0508d5ba9284102f7f26554fc5",
     "Surge/claude_domain.list": "398eb6d1cd25f2f8272b7b1d4d5998ebaea23af2fa00fc8ac55bd24581753d2a",
     "Surge/cn_domain.list": "017f8b00f99234d36ecd54849a6a89388296874a5c0fb6945ced93de575e4562",
     "Surge/cn_ip.list": "ca3ec5a695d3d6f656fdd78cb1c8dc535d48e16339b93b6a8abd93d155b562f6",
@@ -159,8 +154,7 @@
     "Surge/youtube_domain.list": "f5fa542df90a8fb9abfe9ad8328858fb22fd9ddeb397755e4993e126d399bf9a",
     "Text/BankOfAmerica.list": "60812748d44ad1f7aca5dd3fe2001161431a171ba5df4d215a245a2f78afca83",
     "Text/ai.list": "5689118d195e4fe15a191affe6784c74ee3e82e2ec6f50d12b352e557c44968a",
-    "Text/apple_domain.list": "f010c633c8fd4139ce0aad31fa0028c7f45485a878a49a2c206d0100941eefea",
-    "Text/apple_ip.list": "dbdd65c2e3d83fceda19c8d6d6c9146fa875adba268880b21db418f12a3d6c04",
+    "Text/apple_no_resolve.list": "769b00160e4f1dd925b67dadc4102ff0e6a647e91a9e174d81d3c089d60060bb",
     "Text/claude_domain.list": "f3931e3192a98ffdd06f43ae1a9bf76f6d024b772e36049db3c6007123bcd632",
     "Text/cn_domain.list": "c010db856775f622e49fb55aa8a4e271227da3c88e41bd2be04b69f9342e5cbc",
     "Text/cn_ip.list": "3ddeed754f6ae12ac36648d345041488ea55aa6af8340a88b20b1436cbac92e3",
@@ -181,12 +175,12 @@
     "Text/telegram_ip.list": "b7206b67ff27c4b2fbc3c604f722fa6a0e399181fd16ea7897958f4c73b0a75b",
     "Text/usbank.list": "60812748d44ad1f7aca5dd3fe2001161431a171ba5df4d215a245a2f78afca83",
     "Text/youtube_domain.list": "c20c54d2acd671a7000adbaf16cfe4c7027c19d2947365f79f0d5a7de3d922ee",
-    "examples/business-rules-clash.yaml": "1d2d1109dc2ef8c80b6bc9aceea2e193b579a26d7e4aa8a29862fbdcc58d4d62",
-    "examples/business-rules-surge.conf": "b780469c149cbfa460994598c64769557d3a93e3b6281e4c16fd48cea5ed5ca9",
-    "examples/rule-providers-mrs.yaml": "3fb41dcad2b9e9658238470fd0205c5a6b1c22bfa58ee1d03ad306cea6a2b529",
-    "examples/rule-providers-yaml.yaml": "2522f736587b038504aa3a6042c0482688ec077a423453d3532cd4313d57af67",
-    "examples/surge-rules.conf": "3ca15cad3a5eda987f785581a2297b1c4a2f57c967754a0f16de47f3f1f412b3",
-    "metadata/classification-audit.json": "75cb02e13ba51f2d645ce67a109561b06d32cd6ecdc8a46b74c99d01cd686039"
+    "examples/business-rules-clash.yaml": "256d460941f93c7a03e209ed7e84690ea070a20e1e198dd228b74aae293af302",
+    "examples/business-rules-surge.conf": "caa8ac947d7c63218342c3cb3ca8228c885e67ebfdc1c449ed7d5dd039ea11ba",
+    "examples/rule-providers-mrs.yaml": "baa5a3ab93f3da9b6325d16c3a83a9e773022869fbbf399ee6ed96f38c5987e9",
+    "examples/rule-providers-yaml.yaml": "8df7342d7de292c48f450227dbe8b53f66e7a1047a94289d4bba8d098bd6dfae",
+    "examples/surge-rules.conf": "01f9ab2489719beb08ad1accf91ca1f6dc7870fd5b4d895abfcd9858570ee918",
+    "metadata/classification-audit.json": "b94be510de88e64e890d8768040bd410c6559fd62393dd1955cde86e9577b137"
   },
   "rules": {
     "ai": {
@@ -199,25 +193,28 @@
       "upstream_mrs_preserved": true,
       "upstream_sha256": "00f6b29e97e59e9bf20dc9bc5005dc673536c30595ff1c32e6007544205bf1ad"
     },
-    "apple_domain": {
-      "behavior": "domain",
-      "mrs_sha256": "a34b8c69e264fd518e56b614b91ee3018b9b9fc8d460e1421e08402a0cc74543",
-      "output_entries": 1665,
-      "source": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/69f94483c308940c277035c66eb78ff529efd977/geo/geosite/apple.mrs",
+    "apple_no_resolve": {
+      "behavior": "classical",
+      "classical_projection": {
+        "excluded_counts": {
+          "PROCESS-NAME": 13,
+          "USER-AGENT": 23
+        },
+        "excluded_entries": 36,
+        "excluded_types": [
+          "PROCESS-NAME",
+          "USER-AGENT"
+        ],
+        "no_resolve": true,
+        "raw_entries": 1615
+      },
+      "mrs_sha256": null,
+      "output_entries": 1579,
+      "source": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/0b6897dc17e0c513d25449c935a9694818e32f0c/rule/Surge/Apple/Apple_All_No_Resolve.list",
       "surge_exported": true,
-      "upstream_entries": 1665,
-      "upstream_mrs_preserved": true,
-      "upstream_sha256": "a34b8c69e264fd518e56b614b91ee3018b9b9fc8d460e1421e08402a0cc74543"
-    },
-    "apple_ip": {
-      "behavior": "ipcidr",
-      "mrs_sha256": "9c3ac6e550ff760e7af78040ceac1711e4b6173876069926e40a492ad1683cb5",
-      "output_entries": 10,
-      "source": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/69f94483c308940c277035c66eb78ff529efd977/geo-lite/geoip/apple.mrs",
-      "surge_exported": true,
-      "upstream_entries": 10,
-      "upstream_mrs_preserved": true,
-      "upstream_sha256": "9c3ac6e550ff760e7af78040ceac1711e4b6173876069926e40a492ad1683cb5"
+      "upstream_entries": 1579,
+      "upstream_mrs_preserved": false,
+      "upstream_sha256": "e45e27cd85b876512dec54589fe2e0a5dc271eed4942016f023d43d5bb5a68a3"
     },
     "claude_domain": {
       "behavior": "classical",
@@ -585,6 +582,11 @@
   },
   "schema_version": 1,
   "upstreams": {
+    "blackmatrix7": {
+      "branch": "master",
+      "repository": "blackmatrix7/ios_rule_script",
+      "sha": "0b6897dc17e0c513d25449c935a9694818e32f0c"
+    },
     "fakeip": {
       "branch": "release",
       "repository": "wwqgtxx/clash-rules",

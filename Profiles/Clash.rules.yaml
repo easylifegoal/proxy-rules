@@ -34,8 +34,7 @@ rules:
   - "RULE-SET,onedrive_domain,OneDrive"
   - "RULE-SET,google_domain,Google"
   - "RULE-SET,microsoft_domain,Microsoft"
-  - "RULE-SET,apple_domain,Apple"
-  - "RULE-SET,apple_ip,Apple,no-resolve"
+  - "RULE-SET,apple_no_resolve,Apple,no-resolve"
   - "RULE-SET,geolocation-!cn,Proxy"
   - "RULE-SET,cn_domain,DIRECT"
   - "RULE-SET,cn_ip,DIRECT"
@@ -151,13 +150,13 @@ rule-providers:
     interval: 86400
     path: "./providers/proxy-rules/google_domain.mrs"
     url: "https://raw.githubusercontent.com/easylifegoal/proxy-rules/main/Clash/google_domain.mrs"
-  "apple_domain":
+  "apple_no_resolve":
     type: "http"
-    behavior: "domain"
-    format: "mrs"
+    behavior: "classical"
+    format: "yaml"
     interval: 86400
-    path: "./providers/proxy-rules/apple_domain.mrs"
-    url: "https://raw.githubusercontent.com/easylifegoal/proxy-rules/main/Clash/apple_domain.mrs"
+    path: "./providers/proxy-rules/apple_no_resolve.yaml"
+    url: "https://raw.githubusercontent.com/easylifegoal/proxy-rules/main/Clash/apple_no_resolve.yaml?v=shared-v1"
   "geolocation-!cn":
     type: "http"
     behavior: "domain"
@@ -200,10 +199,3 @@ rule-providers:
     interval: 86400
     path: "./providers/proxy-rules/netflix_ip.mrs"
     url: "https://raw.githubusercontent.com/easylifegoal/proxy-rules/main/Clash/netflix_ip.mrs"
-  "apple_ip":
-    type: "http"
-    behavior: "ipcidr"
-    format: "mrs"
-    interval: 86400
-    path: "./providers/proxy-rules/apple_ip.mrs"
-    url: "https://raw.githubusercontent.com/easylifegoal/proxy-rules/main/Clash/apple_ip.mrs"

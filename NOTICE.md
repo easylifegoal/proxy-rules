@@ -8,10 +8,14 @@ MetaCubeX, Mihomo, Surge, Netflix, Anthropic, or bank service.
 | Manifest source | Repository / publication branch | Upstream license |
 | --- | --- | --- |
 | `metacubex` | [MetaCubeX/meta-rules-dat](https://github.com/MetaCubeX/meta-rules-dat), `meta` | [GPL-3.0](https://github.com/MetaCubeX/meta-rules-dat/blob/master/LICENSE) |
+| `blackmatrix7` (Apple common projection) | [blackmatrix7/ios_rule_script](https://github.com/blackmatrix7/ios_rule_script), `master/rule/Surge/Apple/Apple_All_No_Resolve.list` | [Upstream GPL v2 text](https://github.com/blackmatrix7/ios_rule_script/blob/master/LICENSE) |
 | `fakeip` | [wwqgtxx/clash-rules](https://github.com/wwqgtxx/clash-rules), `release` | [GPL-3.0](https://github.com/wwqgtxx/clash-rules/blob/master/LICENSE) |
 | `apns` (retired 2026-11-27; historical attribution) | [QuixoticHeart/rule-set](https://github.com/QuixoticHeart/rule-set), `ruleset/loon/apns.list` | [GPL-3.0](https://github.com/QuixoticHeart/rule-set/blob/master/LICENSE) |
 
 The GPL version 3 text is preserved at [LICENSES/GPL-3.0.txt](LICENSES/GPL-3.0.txt).
+The Apple upstream's GPL version 2 text is preserved verbatim at
+[LICENSES/GPL-2.0.txt](LICENSES/GPL-2.0.txt). Apple source and derived data remain
+under their upstream terms; the GPL-3.0-only code notice does not relicense them.
 The upstream repositories aggregate additional sources, whose original notices
 and terms are not replaced by this file. See their READMEs and build workflows
 for the complete provenance chain, including v2fly/domain-list-community,
@@ -38,6 +42,14 @@ YAML and Surge sets merge the decoded upstream domains with explicit local suffi
 and keyword additions from `custom/overrides.json`. The broad keywords express a
 routing preference, not certification of domain ownership. No partial Claude MRS
 output is published; the previous output remains recoverable in Git history.
+
+The complete Apple upstream file, including its comments, is retained as
+`Sources/apple_no_resolve.list`. Its modified shared exports preserve domain,
+keyword and no-resolve IP entries. Both clients exclude the same reviewed
+PROCESS-NAME and USER-AGENT rules, retained in `Sources/apple_no_resolve.excluded.list`
+and counted in the build metadata. These exports are a documented projection,
+not an unmodified copy of the original full rule set. They do not incorporate
+the retired MetaCubeX Apple sets; older files remain in Git history.
 
 The bank rules predate this synchronization workflow. Their initial community
 source, scope and limitations remain documented in the README; no additional

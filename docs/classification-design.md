@@ -12,7 +12,8 @@
 | YouTube | 新增 MetaCubeX `youtube` | 可单独路由，也可直接指向现有 GlobalMedia 策略；不强制新增客户端策略组 |
 | GlobalMedia | 下列 20 个影音服务的明确清单 | 按服务边界维护，替代宽泛的 `category-entertainment`；不含 AI、游戏和小说大集合 |
 | Meta | MetaCubeX `meta` 公司合集，包含 Facebook / Instagram / Threads / WhatsApp / Messenger / Oculus 等 | 单独使用 Meta 组，放在 AI 后、通用国外规则前；`meta.ai` 优先走 AI，不并入 GlobalMedia |
-| Google / Microsoft / Apple | 保留各自 MetaCubeX 分类 | 公司分类是较宽的兜底，不从中强删 AI、影音等合理子集 |
+| Google / Microsoft | 保留各自 MetaCubeX 分类 | 公司分类是较宽的兜底，不从中强删 AI、影音等合理子集 |
+| Apple | blackmatrix7 `Apple_All_No_Resolve.list` 的共同投影 | 两端统一为 `apple_no_resolve`，保留域名 / 关键词 / IP；显式共同排除 13 条进程和 23 条 User-Agent，原文及排除清单均可审计；IP 全部 no-resolve |
 | OneDrive / GitHub / PayPal / 银行 / Telegram | 保留各自专用分类 | 小类先于公司类、通用 Proxy 类 |
 | APNS（已停用） | 2026-11-27 按用户要求移除独立规则及同步源 | 不再生成专用规则和 APNS 策略引用；推送按剩余 Apple / 其他路由匹配，不关闭系统推送 |
 | CN / Private / 通用 Proxy | 现有域名和 IP 来源 | 作为基础/通用分类，不在这次重构中更改用户的直连和兜底逻辑 |
@@ -70,7 +71,7 @@ Meta 合集保留上游公司分类的广覆盖范围，可能含开发者项目
 5. OneDrive、GitHub 在 Microsoft 前。
 6. 业务分类在通用 Proxy / CN 及最终兜底之前；通用集合相互的既有顺序、IP 解析策略和最终兜底暂不调整。
 
-IP 与域名文件分开发布。只有已明确维护的 Netflix、Telegram、Apple lite 等服务 IP 集合继续存在；不为媒体聚合自动加入整个云厂商 IP 或 ASN。独立 APNS 混合规则已停用。
+Netflix、Telegram 等服务继续分开发布域名与 IP。Apple 改为同一份 classical 共同集合，不再保留旧 MetaCubeX Apple 域名 / lite IP 源；域名基线用于分类审计，关键词和 IP 单独记数。不给媒体聚合加入整个云厂商 IP 或 ASN。独立 APNS 混合规则已停用。
 
 `Profiles/` 由 `custom/client-routing.json` schema 6 的一份 `common` 定义生成，以 Clash 为公共基准；`surge_wifi` 只允许两处已审核的 Wi-Fi 例外，`non-cn-quic` 的 `clients: ["clash"]` 明确标注唯一单端拦截规则。NodeSeek、N26、IP 查询、农行检测、Safeway、Magpie 及端口兜底均统一，规则仅能引用声明过的策略组或内置动作，不直接指定节点。Tailscale 主机规则在两端都有，占位填值后启用。未启用广告规则不保留；完整模板不包含节点、DNS、重写或 MITM 配置。
 
@@ -102,6 +103,6 @@ IP 与域名文件分开发布。只有已明确维护的 Netflix、Telegram、A
 2. 修改例外：用 `custom/overrides.json` 做明确、可追踪的条目调整；删除一个条目不代表排除其父后缀的覆盖，分类检查会继续验证。
 3. 新增样例：同步更新 `custom/classification.json`，把“这条不应再错分”的期望写成可执行检查。
 4. 更新发布：继续每天 UTC+8 09:17 拉取固定上游快照，验证后生成 MRS / YAML / Surge LIST；失败保留上一版。
-5. 接入客户端：先备份，保留节点与非路由设置，补齐同名策略组，再按统一模板替换规则与 provider；恢复私人地址和 Surge Wi-Fi 值。Claude 使用 classical YAML / Surge LIST，CN IP 使用允许解析的新版 URL；校验通过后由用户决定何时重载。
+5. 接入客户端：先备份，保留节点与非路由设置，补齐同名策略组，再按统一模板替换规则与 provider；恢复私人地址和 Surge Wi-Fi 值。Claude / Apple 使用 classical YAML / Surge LIST；Apple 主规则与每条 IP 都保留 no-resolve，CN IP 使用允许解析的新版 URL；校验通过后由用户决定何时重载。
 
 所有服务组件的原始文件保存在 `Sources/global_media_domain/`，精确来源 SHA、哈希、条数与筛选范围保存在 `metadata/sync-state.json`。旧 `category-entertainment` 原始文件已不再作为当前输入，历史版本可从 Git 恢复。

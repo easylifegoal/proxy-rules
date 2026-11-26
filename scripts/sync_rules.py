@@ -95,6 +95,14 @@ def validate_manifest(manifest: dict) -> None:
             raise ValueError(f"Invalid cache version: {name}")
         if "surge_no_resolve" in rule and (rule["behavior"] != "ipcidr" or not isinstance(rule["surge_no_resolve"], bool)):
             raise ValueError(f"Invalid Surge IP resolution flag: {name}")
+        if "no_resolve" in rule and (rule["behavior"] != "classical" or not isinstance(rule["no_resolve"], bool)):
+            raise ValueError(f"Invalid shared classical no-resolve flag: {name}")
+        if "exclude_classical_types" in rule:
+            excluded = rule["exclude_classical_types"]
+            if (input_format != "classical" or not isinstance(excluded, list) or not excluded
+                    or len(excluded) != len(set(excluded))
+                    or not set(excluded) <= {"PROCESS-NAME", "USER-AGENT"}):
+                raise ValueError(f"Invalid reviewed classical projection: {name}")
         if sum(key in rule for key in ("local", "upstream", "inputs")) != 1:
             raise ValueError(f"Exactly one input required: {name}")
         if "local" in rule:
@@ -227,6 +235,25 @@ def convert(mihomo: Path, behavior: str, fmt: str, source: Path, target: Path) -
                          f"{completed.stderr[-1200:]} {completed.stdout[-1200:]}")
 
 
+def project_classical(text: str, excluded_types=()) -> tuple[list[str], dict[str, list[str]]]:
+    """Keep the shared language, with only explicitly reviewed exclusions."""
+    allowed, excluded = [], {}
+    if not set(excluded_types) <= {"PROCESS-NAME", "USER-AGENT"}:
+        raise ValueError("Unreviewed classical projection type")
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line or line.startswith(("#", "//")):
+            continue
+        parts = [part.strip() for part in line.split(",")]
+        if parts[0] in excluded_types:
+            if len(parts) != 2 or not parts[1] or any(ord(c) < 32 for c in parts[1]):
+                raise ValueError(f"Malformed excluded classical rule: {line!r}")
+            excluded.setdefault(parts[0], set()).add(",".join(parts))
+        else:
+            allowed.append(line)
+    return parse_classical("\n".join(allowed)), {kind: sorted(values) for kind, values in sorted(excluded.items())}
+
+
 def check_count(name: str, count: int, minimum: int, previous: int | None,
                 allow_large_change: bool = False) -> None:
     if count < minimum:
@@ -285,7 +312,7 @@ def yaml_payload(entries: list[str], header: str) -> bytes:
 
 
 def provider_format(rule: dict, preferred: str) -> tuple[str, str]:
-    # MRS cannot encode keywords. Never publish partial Claude/APNS MRS files.
+    # MRS cannot encode keywords. Classical sets must use complete YAML outputs.
     fmt = "yaml" if rule["behavior"] == "classical" else preferred
     behavior = "classical" if fmt == "yaml" and rule.get("classical_yaml") else rule["behavior"]
     return behavior, fmt
@@ -296,7 +323,7 @@ def render_examples(manifest: dict, contract: dict | None = None) -> dict[str, b
     result = {}
     for fmt in ("mrs", "yaml"):
         lines = ["# Provider-only fragment. Keep your existing rules, policies and DNS settings.",
-                 "# Classical sets (Claude/APNS) use YAML even in the MRS-preferred example.", "rule-providers:"]
+                 "# Classical sets use YAML even in the MRS-preferred example.", "rule-providers:"]
         for rule in manifest["rules"]:
             out = rule.get("output", rule["name"])
             behavior, actual_format = provider_format(rule, fmt)
@@ -317,7 +344,7 @@ def render_examples(manifest: dict, contract: dict | None = None) -> dict[str, b
         by_name = {r["name"]: r for r in manifest["rules"]}
         header = ["# Business-domain ordering fragment ONLY; not a complete profile.",
                   "# Replace POLICY_* with existing client policies. Do not overwrite your rules.",
-                  "# Preserve Wi-Fi, local exceptions, APNS (before Apple), service IP rules and fallback."]
+                  "# Preserve Wi-Fi, local exceptions, service IP rules and fallback; APNS is retired."]
         clash, surge = header + ["rules:"], header + ["[Rule]"]
         for name in contract["domain_priority"]:
             output = by_name[name].get("output", name)
@@ -332,7 +359,7 @@ def build_rule(rule: dict, data: bytes | dict[str, bytes] | None, snapshots: dic
                old: dict, mihomo: Path, root: Path, allow_large_change: bool) -> tuple[dict, dict]:
     name, behavior = rule["name"], rule["behavior"]
     input_behavior = rule.get("input_behavior", behavior)
-    artifacts, components = {}, {}
+    artifacts, components, excluded = {}, {}, {}
     with tempfile.TemporaryDirectory(prefix="proxy-rule-") as directory:
         work = Path(directory)
         if "inputs" in rule:
@@ -364,8 +391,10 @@ def build_rule(rule: dict, data: bytes | dict[str, bytes] | None, snapshots: dic
             input_hash = digest(json_bytes({k: digest(v) for k, v in sorted(data.items())}))
         elif data is not None:
             if input_behavior == "classical":
-                entries = parse_classical(data.decode("utf-8-sig"))
+                entries, excluded = project_classical(data.decode("utf-8-sig"), rule.get("exclude_classical_types", []))
                 artifacts[f"Sources/{name}.list"] = data
+                if rule.get("exclude_classical_types"):
+                    artifacts[f"Sources/{name}.excluded.list"] = ("\n".join(sorted(e for values in excluded.values() for e in values)) + "\n").encode()
             else:
                 incoming, decoded = work / "upstream.mrs", work / "upstream.txt"
                 incoming.write_bytes(data)
@@ -385,6 +414,8 @@ def build_rule(rule: dict, data: bytes | dict[str, bytes] | None, snapshots: dic
         if behavior == "classical" and input_behavior != behavior:
             entries = parse_classical("\n".join(surge_rules(entries, input_behavior)))
         entries = apply_overrides(entries, overrides.get(name, {}), behavior)
+        if rule.get("no_resolve") and any(e.startswith(("IP-CIDR,", "IP-CIDR6,")) and not e.endswith(",no-resolve") for e in entries):
+            raise ValueError(f"{name}: every IP entry must keep no-resolve")
         if behavior == "classical":
             check_count(name + " output", len(entries), rule["minimum_entries"], old.get("output_entries"), allow_large_change)
             heading = f"# Generated {name}; edit sources.json/custom, not this file.\n# Provenance and license: ../metadata/sync-state.json, ../NOTICE.md\n"
@@ -404,6 +435,14 @@ def build_rule(rule: dict, data: bytes | dict[str, bytes] | None, snapshots: dic
             if input_behavior != behavior:
                 record["input_behavior"] = input_behavior
                 record["custom_additions"] = overrides.get(name, {}).get("add", [])
+            if rule.get("exclude_classical_types"):
+                record["classical_projection"] = {
+                    "excluded_types": rule["exclude_classical_types"],
+                    "excluded_counts": {kind: len(values) for kind, values in excluded.items()},
+                    "excluded_entries": sum(len(values) for values in excluded.values()),
+                    "raw_entries": len(upstream_entries) + sum(len(values) for values in excluded.values()),
+                    "no_resolve": rule.get("no_resolve", False),
+                }
             print(f"{name}: {len(upstream_entries)} source -> {len(entries)} classical entries; YAML/Surge only", flush=True)
             return artifacts, record
         initial = work / "canonical.txt"

@@ -40,6 +40,27 @@
         }
       ],
       "upstream_domain_entries": 21
+    },
+    {
+      "complete_shared_classical_entries": 1579,
+      "domain_baseline_entries": 1559,
+      "ip_entries": 13,
+      "keyword_entries": 7,
+      "name": "apple_no_resolve",
+      "samples": [
+        {
+          "domain": "www.apple.com",
+          "matched": true
+        },
+        {
+          "domain": "api.push.apple.com",
+          "matched": true
+        },
+        {
+          "domain": "probe-testflight.example",
+          "matched": true
+        }
+      ]
     }
   ],
   "disjoint": [
@@ -73,7 +94,7 @@
     "meta_domain",
     "google_domain",
     "microsoft_domain",
-    "apple_domain"
+    "apple_no_resolve"
   ],
   "forbidden": [
     {
@@ -570,7 +591,7 @@
       "overlap_count": 182
     },
     {
-      "after": "apple_domain",
+      "after": "apple_no_resolve",
       "before": "global_media_domain",
       "examples": [
         {
@@ -587,11 +608,6 @@
           "left_entry": "+.applemusic.com",
           "right_entry": "+.applemusic.com",
           "witness": "applemusic.com"
-        },
-        {
-          "left_entry": "+.applemusic.com",
-          "right_entry": "tv.applemusic.com",
-          "witness": "tv.applemusic.com"
         },
         {
           "left_entry": "+.applemusic.com.au",
@@ -622,9 +638,14 @@
           "left_entry": "+.applepodcasts.com",
           "right_entry": "+.applepodcasts.com",
           "witness": "applepodcasts.com"
+        },
+        {
+          "left_entry": "+.music.apple.com",
+          "right_entry": "+.apple.com",
+          "witness": "music.apple.com"
         }
       ],
-      "overlap_count": 52
+      "overlap_count": 28
     },
     {
       "after": "microsoft_domain",
@@ -946,7 +967,7 @@
     {
       "all_matching_categories": [
         "global_media_domain",
-        "apple_domain"
+        "apple_no_resolve"
       ],
       "domain": "tv.apple.com",
       "winner": "global_media_domain"
@@ -954,7 +975,7 @@
     {
       "all_matching_categories": [
         "global_media_domain",
-        "apple_domain"
+        "apple_no_resolve"
       ],
       "domain": "music.apple.com",
       "winner": "global_media_domain"
@@ -962,7 +983,7 @@
     {
       "all_matching_categories": [
         "global_media_domain",
-        "apple_domain"
+        "apple_no_resolve"
       ],
       "domain": "podcasts.apple.com",
       "winner": "global_media_domain"
@@ -1034,10 +1055,10 @@
     },
     {
       "all_matching_categories": [
-        "apple_domain"
+        "apple_no_resolve"
       ],
       "domain": "www.apple.com",
-      "winner": "apple_domain"
+      "winner": "apple_no_resolve"
     },
     {
       "all_matching_categories": [],
@@ -1056,7 +1077,7 @@
     }
   ],
   "schema_version": 1,
-  "scope": "domain categories; converted classical sets use upstream-only baselines; broad extensions audited separately",
+  "scope": "domain categories; classical overlap checks use exact/suffix baselines; keyword/IP extensions audited separately",
   "subsets": [
     {
       "checked_entries": 21,

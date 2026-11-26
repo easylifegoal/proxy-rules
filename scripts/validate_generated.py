@@ -9,7 +9,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 
-from sync_rules import parse_entries, provider_format, surge_rules
+from sync_rules import apply_overrides, parse_entries, project_classical, provider_format, surge_rules
 from client_profiles import TEST_TEMPLATE_VALUES, build_profiles, published_url, render_profiles, required_policies
 from rule_audit import audit_rule_outputs
 
@@ -39,9 +39,20 @@ def main():
         raise ValueError("Recorded classification audit is stale")
     print(f"Validated category boundaries and {len(audit['samples'])} domain routing examples")
     # Independently compare Surge and classical YAML with the canonical Text sets.
+    overrides = json.loads((ROOT / "custom/overrides.json").read_text())
     for rule in manifest["rules"]:
         output = rule.get("output", rule["name"])
         entries = parse_entries((ROOT / "Text" / f"{output}.list").read_text(), rule["behavior"])
+        if rule.get("exclude_classical_types"):
+            shared, excluded = project_classical((ROOT / "Sources" / f"{rule['name']}.list").read_text(), rule["exclude_classical_types"])
+            if entries != apply_overrides(shared, overrides.get(rule["name"], {}), "classical"):
+                raise ValueError(f"Shared classical output differs from upstream projection: {output}")
+            projection = state["rules"][rule["name"]]["classical_projection"]
+            if projection["excluded_counts"] != {kind: len(values) for kind, values in excluded.items()}:
+                raise ValueError(f"Recorded classical exclusions differ: {output}")
+            excluded_text = (ROOT / "Sources" / f"{rule['name']}.excluded.list").read_text().splitlines()
+            if excluded_text != sorted(e for values in excluded.values() for e in values):
+                raise ValueError(f"Classical exclusion audit file differs: {output}")
         expected = surge_rules(entries, rule["behavior"], rule.get("surge_no_resolve", True)) if rule.get("surge", True) or rule.get("classical_yaml") else None
         if rule.get("surge", True):
             actual = sorted(line for line in (ROOT / "Surge" / f"{output}.list").read_text().splitlines()

@@ -1,6 +1,6 @@
 # Business-domain ordering fragment ONLY; not a complete profile.
 # Replace POLICY_* with existing client policies. Do not overwrite your rules.
-# Preserve Wi-Fi, local exceptions, APNS (before Apple), service IP rules and fallback.
+# Preserve Wi-Fi, local exceptions, service IP rules and fallback; APNS is retired.
 rules:
   - "RULE-SET,claude_domain,POLICY_claude_domain"
   - "RULE-SET,ai,POLICY_ai"
@@ -15,4 +15,4 @@ rules:
   - "RULE-SET,meta_domain,POLICY_meta_domain"
   - "RULE-SET,google_domain,POLICY_google_domain"
   - "RULE-SET,microsoft_domain,POLICY_microsoft_domain"
-  - "RULE-SET,apple_domain,POLICY_apple_domain"
+  - "RULE-SET,apple_no_resolve,POLICY_apple_no_resolve"

@@ -149,11 +149,7 @@
         "Microsoft"
       ],
       [
-        "apple_domain",
-        "Apple"
-      ],
-      [
-        "apple_ip",
+        "apple_no_resolve",
         "Apple"
       ],
       [

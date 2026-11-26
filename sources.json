@@ -3,7 +3,8 @@
   "publish_repository": "easylifegoal/proxy-rules",
   "upstreams": {
     "metacubex": {"repository": "MetaCubeX/meta-rules-dat", "branch": "meta"},
-    "fakeip": {"repository": "wwqgtxx/clash-rules", "branch": "release"}
+    "fakeip": {"repository": "wwqgtxx/clash-rules", "branch": "release"},
+    "blackmatrix7": {"repository": "blackmatrix7/ios_rule_script", "branch": "master"}
   },
   "rules": [
     {"name": "fakeipfilter_domain", "behavior": "domain", "upstream": "fakeip", "path": "fakeip-filter.mrs", "minimum_entries": 60, "surge": false},
@@ -43,13 +44,12 @@
     {"name": "onedrive_domain", "behavior": "domain", "upstream": "metacubex", "path": "geo/geosite/onedrive.mrs", "minimum_entries": 8},
     {"name": "microsoft_domain", "behavior": "domain", "upstream": "metacubex", "path": "geo/geosite/microsoft.mrs", "minimum_entries": 300},
     {"name": "google_domain", "behavior": "domain", "upstream": "metacubex", "path": "geo/geosite/google.mrs", "minimum_entries": 500},
-    {"name": "apple_domain", "behavior": "domain", "upstream": "metacubex", "path": "geo/geosite/apple.mrs", "minimum_entries": 700},
+    {"name": "apple_no_resolve", "behavior": "classical", "input_format": "classical", "no_resolve": true, "cache_tag": "shared-v1", "exclude_classical_types": ["PROCESS-NAME", "USER-AGENT"], "upstream": "blackmatrix7", "path": "rule/Surge/Apple/Apple_All_No_Resolve.list", "minimum_entries": 1500},
     {"name": "geolocation-!cn", "behavior": "domain", "upstream": "metacubex", "path": "geo/geosite/geolocation-!cn.mrs", "minimum_entries": 10000},
     {"name": "cn_domain", "behavior": "domain", "upstream": "metacubex", "path": "geo/geosite/cn.mrs", "minimum_entries": 50000},
     {"name": "private_ip", "behavior": "ipcidr", "upstream": "metacubex", "path": "geo/geoip/private.mrs", "minimum_entries": 8},
     {"name": "cn_ip", "behavior": "ipcidr", "surge_no_resolve": false, "cache_tag": "resolve-v1", "upstream": "metacubex", "path": "geo/geoip/cn.mrs", "minimum_entries": 4000},
     {"name": "telegram_ip", "behavior": "ipcidr", "upstream": "metacubex", "path": "geo/geoip/telegram.mrs", "minimum_entries": 6},
-    {"name": "netflix_ip", "behavior": "ipcidr", "upstream": "metacubex", "path": "geo/geoip/netflix.mrs", "minimum_entries": 50},
-    {"name": "apple_ip", "behavior": "ipcidr", "upstream": "metacubex", "path": "geo-lite/geoip/apple.mrs", "minimum_entries": 5}
+    {"name": "netflix_ip", "behavior": "ipcidr", "upstream": "metacubex", "path": "geo/geoip/netflix.mrs", "minimum_entries": 50}
   ]
 }

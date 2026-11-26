@@ -6,7 +6,7 @@
 
 [工作流与运行记录](https://github.com/easylifegoal/proxy-rules/actions/workflows/sync-rules.yml)
 
-结合 Clash 与 Surge 的分类需求，共 23 组：MetaCubeX 派生分类 21 组（含 Meta 公司合集及服务清单聚合的 GlobalMedia）、Fake-IP 排除名单 1 组、手动维护的银行域名 1 组。
+结合 Clash 与 Surge 的分类需求，共 22 组：MetaCubeX 派生分类 19 组（含 Meta 公司合集及服务清单聚合的 GlobalMedia）、blackmatrix7 派生 Apple 共同规则 1 组、Fake-IP 排除名单 1 组、手动维护的银行域名 1 组。
 不上传节点、密码、UUID、私钥或完整代理配置，也不会自动修改任何客户端配置。
 仓库中的 `Profiles/` 是保留全部已启用分流规则及顺序的规则模板；仅去除连接信息，私人地址和 SSID 以原位置上的注释占位规则保留。包含节点的完整配置只保存在用户自己的设备 / iCloud。
 
@@ -24,13 +24,13 @@
 
 | 规则 | 来源 |
 | --- | --- |
-| AI、GitHub、Telegram、Netflix、PayPal、OneDrive、微软、Google、Apple、私有域名、国内域名、国外域名 | MetaCubeX `meta/geo/geosite` |
+| AI、GitHub、Telegram、Netflix、PayPal、OneDrive、微软、Google、私有域名、国内域名、国外域名 | MetaCubeX `meta/geo/geosite` |
 | `claude_domain` | MetaCubeX `anthropic.mrs` 解码后合并 `custom/overrides.json` 的四条宽匹配规则，发布完整 classical YAML / Surge；仅上游基线属于 AI 子集 |
 | `youtube_domain` | MetaCubeX `youtube.mrs`，可单独路由，属于 GlobalMedia 大集合 |
 | `meta_domain` | MetaCubeX `meta.mrs` 公司合集，覆盖 Facebook / Instagram / Threads / WhatsApp / Messenger / Oculus 等；独立路由到 Meta，AI 优先匹配 |
 | `global_media_domain` | 在 `sources.json` 明确列出 20 个影音服务，同一 MetaCubeX 快照聚合；**不再使用 category-entertainment**，不引入游戏、小说或 AI 大分类；Disney+ 使用审核过的精确条目白名单 |
 | 私有、中国、Telegram、Netflix IP | MetaCubeX `meta/geo/geoip` |
-| Apple IP | MetaCubeX `meta/geo-lite/geoip/apple.mrs`，保留原来的 lite 来源 |
+| `apple_no_resolve` | blackmatrix7 `Apple_All_No_Resolve.list` 的域名、关键词、IPv4/IPv6 共同投影；全部 IP 条目带 `no-resolve`，两端使用相同的 classical 集合 |
 | `google_domain` | MetaCubeX `google.mrs`，**包含 YouTube**；不引入整份 Google/云平台 IP 集合，也不等同于旧 Surge Google 混合名单 |
 | `fakeipfilter_domain` | wwqgtxx/clash-rules `release/fakeip-filter.mrs`，更上游为 ShellCrash |
 | `usbank_domain` | 本仓库 `custom/usbank.txt`，仅下面说明的六个银行域名 |
@@ -41,9 +41,9 @@
 
 | 路径 | 用途 |
 | --- | --- |
-| `Clash/<名称>.mrs` | Mihomo，`format: mrs`；`behavior` 对应 domain 或 ipcidr；**Claude 不生成 MRS** |
-| `Clash/<名称>.yaml` | 可读 YAML，通常为 domain/ipcidr；**银行与 Claude 使用 classical 格式** |
-| `Text/<名称>.list` | 可读规范化数据；域名/IP 清单不能直接当作 Surge RULE-SET，Claude 为 classical 规则 |
+| `Clash/<名称>.mrs` | Mihomo，`format: mrs`；`behavior` 对应 domain 或 ipcidr；**Claude / Apple 不生成 MRS** |
+| `Clash/<名称>.yaml` | 可读 YAML，通常为 domain/ipcidr；**银行、Claude 与 Apple 使用 classical 格式** |
+| `Text/<名称>.list` | 可读规范化数据；域名/IP 清单不能直接当作 Surge RULE-SET，Claude / Apple 为 classical 规则 |
 | `Surge/<名称>.list` | Surge RULE-SET，不包含策略名称；IP 默认 no-resolve，但 `cn_ip` 允许解析，与 Clash 保持一致 |
 | `Sources/*` | 未修改的上游 MRS / classical 原文，以及规范化文本，用于审核与重新生成 |
 | `metadata/sync-state.json` | 最后一次发布使用的源版本、哈希及条数，不是最近一次检查时间 |
@@ -53,12 +53,12 @@
 
 ### 两端规则配置
 
-- [Clash 规则配置](Profiles/Clash.rules.yaml)：23 个 provider、36 条公共路由，加 1 条 Clash 专用 UDP/443 拦截，共 37 条（36 条已展开规则 + 1 条私人地址占位规则）。Fake-IP 只供现有 DNS 配置引用。Claude 使用 YAML，其余使用 MRS。
-- [Surge 规则配置](Profiles/Surge.rules.conf)：同样的 36 条公共路由，加 2 条 Wi-Fi 直连例外，共 38 条（35 条已展开规则 + 1 条私人地址占位 + 2 条 Wi-Fi 占位）；不输出 UDP/443 拦截规则。
+- [Clash 规则配置](Profiles/Clash.rules.yaml)：22 个 provider、35 条公共路由，加 1 条 Clash 专用 UDP/443 拦截，共 36 条（35 条已展开规则 + 1 条私人地址占位规则）。Fake-IP 只供现有 DNS 配置引用。Claude / Apple 使用 YAML，其余使用 MRS。
+- [Surge 规则配置](Profiles/Surge.rules.conf)：同样的 35 条公共路由，加 2 条 Wi-Fi 直连例外，共 37 条（34 条已展开规则 + 1 条私人地址占位 + 2 条 Wi-Fi 占位）；不输出 UDP/443 拦截规则。
 
 两份都**不是独立可连接的完整配置**，不含节点连接信息、策略组定义、真实私人 IP / SSID、DNS 设置或控制器凭据。公共路由只维护一份：`custom/client-routing.json` schema 6 的 `common.routes`、`common.insertions`、`common.fallback` 定义规则、顺序和兜底，`policy_groups` 声明可引用的组名；不维护两份不同业务策略表。客户端差异明确限定为：`surge_wifi` 的两条 Wi-Fi 直连，以及 `non-cn-quic` 上的 `"clients": ["clash"]`（Surge 使用原生 QUIC 处理）。构建校验拒绝把其他业务规则设为单端专用。未启用的两条广告规则按用户要求不收录。
 
-NodeSeek、N26、农行检测、IP 查询、Safeway、Magpie 等业务规则均在两端保留。规则只指向同名策略组或 `DIRECT` / `REJECT`，不直接引用节点：NodeSeek → `Nodeseek`，N26 → `N26`，PayPal 统一大小写为 `PayPal`。Surge 本地配置补齐缺少的组；2026-11-27 起停用独立 APNS 规则、provider 和策略组，不再同步专用 APNS 数据。推送按现有 Apple / 其他路由继续匹配；这不会关闭系统推送。Apple 域名和带 `no-resolve` 的 IP 规则保持不变。
+NodeSeek、N26、农行检测、IP 查询、Safeway、Magpie 等业务规则均在两端保留。规则只指向同名策略组或 `DIRECT` / `REJECT`，不直接引用节点：NodeSeek → `Nodeseek`，N26 → `N26`，PayPal 统一大小写为 `PayPal`。Surge 本地配置补齐缺少的组；2026-11-27 起停用独立 APNS 规则、provider 和策略组，不再同步专用 APNS 数据。推送按现有 Apple / 其他路由继续匹配；这不会关闭系统推送。Apple 统一为同一个 `apple_no_resolve` 集合，保留域名和 `no-resolve` IP 的匹配语义。
 
 私人规则不会被丢弃或替换成一个随意的真实值，而是作为注释留在准确位置：
 
@@ -109,17 +109,21 @@ Clash provider 缓存使用 `./providers/proxy-rules/`。原生校验会在临�
 
 需要参考长期业务分类的先后关系时，使用 [Clash 业务顺序片段](examples/business-rules-clash.yaml) / [Surge 业务顺序片段](examples/business-rules-surge.conf)。两份由同一份分类约束生成，只含业务域名规则，不能替换完整配置；策略占位符需映射到各自已有策略。
 
-MRS 示例是 **MRS 优先**，其中 Claude 自动使用 `behavior: classical`、`format: yaml`。MRS 不支持关键词规则，不能生成部分 MRS 却声称完整等价。Claude 的 YAML 与 Surge 文件分别包含同一套完整规则。
+MRS 示例是 **MRS 优先**，其中 Claude / Apple 自动使用 `behavior: classical`、`format: yaml`。MRS 不支持关键词规则，不能生成部分 MRS 却声称完整等价。Claude / Apple 的 YAML 与 Surge 文件分别包含各自同一套完整共同规则。
 
 `fakeipfilter_domain` 是 Mihomo 的 **DNS Fake-IP 排除名单**，不是路由策略，因此不生成 Surge 路由文件。它包含 Mihomo 的单层通配符，不能直接换成 Surge 的跨层通配符；其余规则若将来出现不能等价转换的模式，构建会停止，绝不静默扩大匹配范围。
 
 MetaCubeX 跨格式生成以当前 **MRS 实际包含的规则**为基准。其他旧 classical 名单中的正则、关键词、进程、User-Agent 和 ASN 规则不会自动合并；这不是旧 Surge 名单的逐条镜像，差异详见对比文档。未做自定义修改的 MRS 会原样发布，不重新压缩替换。
 
-Claude 是显式的 classical 例外。目前仅接受两端共有的 `DOMAIN`、`DOMAIN-SUFFIX`、`DOMAIN-KEYWORD`、`IP-CIDR`、`IP-CIDR6` 及 IP 的 `no-resolve`。遇到新增的未知类型、选项或夹带策略名会阻止发布，不能静默丢弃。
+Claude / Apple 是显式的 classical 例外。目前仅接受两端共有的 `DOMAIN`、`DOMAIN-SUFFIX`、`DOMAIN-KEYWORD`、`IP-CIDR`、`IP-CIDR6` 及 IP 的 `no-resolve`。遇到新增的未知类型、选项或夹带策略名会阻止发布，不能静默丢弃。
 
 GlobalMedia 聚合时保留每个组件的原始 MRS、解码文本、SHA 与条数。每个组件分别执行格式和数量检查，避免一个服务丢失被其他服务新增掩盖。服务清单不会随娱乐大分类自动扩张。Disney+ 白名单中若有条目从上游消失，构建报错；新增条目需要审核后补入。
 
 `custom/classification.json` 定义域名分类约束：媒体与 Claude 上游基线 / AI 不得交叉（包括父后缀覆盖）；Claude 上游基线必须属于 AI，Netflix / YouTube 必须属于媒体集合。合并后的 Claude 宽匹配范围不再声称是 AI 子集或与其他业务互斥：`scripts/rule_audit.py` 单独检查完整集合保留全部上游条目及四条必需补充项，并验证关键词匹配。报告显式记录上游基线与完整 classical 扩展，避免用基线检查冒充完整集合检查。合理的公司分类交叉仍检查建议优先级。`--allow-large-change` **不能跳过分类或补充项防漏检查**。
+
+Apple 自 2026-11-27 起改用统一的 `apple_no_resolve`：源于 blackmatrix7 的 `Apple_All_No_Resolve.list`，两端共同发布域名、关键词及 IP 规则。当前源共有 1,615 条，保留 1,579 条；13 条 `PROCESS-NAME`（路由器无法识别终端进程）和 23 条 `USER-AGENT`（Mihomo 无对应规则）在两端共同排除，清单见 `Sources/apple_no_resolve.excluded.list`，数量及源版本见同步元数据。这是明确记录的共同投影，不宣称逐条保留原版所有匹配方式。完整上游原文保存在 `Sources/apple_no_resolve.list`；新增未知类型仍阻止发布。
+
+Clash 使用 `behavior: classical`、`format: yaml` 的 `Clash/apple_no_resolve.yaml?v=shared-v1`，Surge 使用 `Surge/apple_no_resolve.list?v=shared-v1`，两端主规则都带 `no-resolve`，都指向现有 Apple 组。旧 `apple_domain` / `apple_ip` 输出已移除，可从 Git 历史恢复；不要继续引用旧的 MRS 缓存。关键词使 Apple 覆盖范围不止域名基线，分类报告单独列出关键词和 IP 数量，不把域名基线检查冒充完整实时路由模拟。媒体 / AI 优先级保持在 Apple 前。
 
 ### 如何维护
 
